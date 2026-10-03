@@ -32,9 +32,9 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 | Flujo | Versión | Nodos | Notas |
 |---|---|---|---|
 | Finanzas - Bot | **v9** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v9.json` |
-| Finanzas - Programado | **v5** | 32 | Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
+| Finanzas - Programado | **v5** | 32 | `flujos/finanzas/finanzas-programado-v5.json`. Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
 | Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
-| Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 5 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA` |
+| Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
 | Agente de Pagos (WhatsApp) | estable | — | Hoja "Registro Pagos"; error workflow `CiiO6RLWImqCMVJS` |
 
 Arquitectura del bot de finanzas, acciones, pestañas de la hoja y modelo de datos: [docs/finanzas-arquitectura.md](docs/finanzas-arquitectura.md).

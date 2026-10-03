@@ -4,13 +4,13 @@
 | Agente | Flujo | Versión | Archivo | Estado en el repo |
 |---|---|---|---|---|
 | Finanzas | Bot | v9 | [finanzas/finanzas-bot-v9.json](finanzas/finanzas-bot-v9.json) | ✅ |
-| Finanzas | Programado | v5 | `finanzas/finanzas-programado-v5.json` | ⏳ falta subir |
-| Finanzas | Errores | v1 | `finanzas/finanzas-errores-v1.json` | ⏳ falta subir |
-| Asistente | Entrada | v3 | `asistente/asistente-entrada-v3.json` | ⏳ falta subir |
-| Asistente | Reloj | v3 | `asistente/asistente-reloj-v3.json` | ⏳ falta subir |
-| Asistente | Errores | v3 | `asistente/asistente-errores-v3.json` | ⏳ falta subir |
-| Pagos | Agente WhatsApp | estable | `pagos/pagos-agente.json` | ⏳ falta subir |
-| Pagos | Errores | estable | `pagos/pagos-errores.json` | ⏳ falta subir |
+| Finanzas | Programado | v5 | [finanzas/finanzas-programado-v5.json](finanzas/finanzas-programado-v5.json) | ✅ |
+| Finanzas | Errores | v1 | `finanzas/finanzas-errores-v1.json` | — no se versiona por ahora |
+| Asistente | Entrada | v3 | `asistente/asistente-entrada-v3.json` | — no se versiona por ahora |
+| Asistente | Reloj | v3 | `asistente/asistente-reloj-v3.json` | — no se versiona por ahora |
+| Asistente | Errores | v3 | [asistente/asistente-errores-v3.json](asistente/asistente-errores-v3.json) | ✅ |
+| Pagos | Agente WhatsApp | estable | `pagos/pagos-agente.json` | — no se versiona por ahora |
+| Pagos | Errores | estable | `pagos/pagos-errores.json` | — no se versiona por ahora |
 
 ## Convenciones
 - Nombre del archivo: `<agente>-<flujo>-v<N>.json`, en minúsculas y sin espacios. El nombre **dentro** de n8n puede seguir siendo "Finanzas - Bot v9".
