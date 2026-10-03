@@ -1,6 +1,6 @@
 # Finanzas: arquitectura y modelo de datos
 
-## Flujo "Finanzas - Bot" (v11, 88 nodos)
+## Flujo "Finanzas - Bot" (v12, 88 nodos)
 Telegram Trigger → Normalizar → ¿Autorizado? → Config → **Leer hoja** (batchGet de ~20 pestañas) → **Tablas** → Buscar en log (anti-duplicados por `update_id`) → Abrir registro (Log Bot) → Escribiendo → Leer movimientos → **Contexto** (estado + prompt) → **Tipo**:
 - **Botón** → Contestar → Leer confirmación → Preparar candado → ¿Vigente? → Reservar → Esperar 3 s → Verificar → ¿Es mía? → Editar botones → Marcar respondida → Plan.
 - **Comando** (`/saldos`, `/mes`, `/tarjeta`, `/deudas`, `/prestamos`, `/cobrar`, `/inversiones`, `/reventas`, `/presupuesto`, `/metas`, `/flujo`, `/suscripciones`, `/movimientos`, `/revisar`, `/deshacer`) → Plan.

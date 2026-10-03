@@ -32,7 +32,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 ## Flujos y versiones actuales
 | Flujo | Versión | Nodos | Notas |
 |---|---|---|---|
-| Finanzas - Bot | **v11** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v11.json` (3-oct: v10 + `/cobrar` limpio y con botones, guardia de "presté") |
+| Finanzas - Bot | **v12** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v12.json` (3-oct: v10 + `/cobrar` con botones, guardia de "presté", correcciones que no se pierden con botones) |
 | Finanzas - Programado | **v5** | 32 | `flujos/finanzas/finanzas-programado-v5.json`. Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
 | Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
@@ -56,7 +56,7 @@ Detalle de convenciones de código para nodos Code y JSON: ver [.claude/rules/n8
 No hay build ni tests de n8n en el repo; la verificación es estática más la simulación de nodos Code. Luxon lo instala el hook `.claude/hooks/session-start.sh`.
 ```bash
 S=.claude/skills/n8n-workflow-check/scripts
-F=flujos/finanzas/finanzas-bot-v11.json
+F=flujos/finanzas/finanzas-bot-v12.json
 python3 $S/check_workflow.py $F --modo produccion            # revisión completa; "Resultado: N errores, M avisos"
 python3 $S/check_workflow.py nuevo.json --base $F            # versión nueva contra el export anterior (IDs, webhookId, credenciales)
 # el export anterior sale del historial: git show <commit>:flujos/finanzas/finanzas-bot-v9.json > /tmp/v9.json
