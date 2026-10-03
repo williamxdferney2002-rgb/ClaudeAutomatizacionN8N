@@ -1,0 +1,55 @@
+# Automatizaciones n8n de William
+
+Proyecto personal de automatizaciones en n8n (self-hosted) para el Ingeniero William Delgado (Bucaramanga, Colombia).
+Tres agentes en producción: **Finanzas** (Telegram), **Asistente personal** (Telegram) y **Pagos** (WhatsApp).
+
+## Cómo trabajar con William (leer siempre)
+- Dirígete a él como **"Ingeniero William"** en cada respuesta. Responde en **español**, claro y sin relleno.
+- Entrega **automatizaciones funcionales y optimizadas**: JSON importable, no fragmentos sueltos, salvo que pida un cambio manual pequeño.
+- **Antes de cambios grandes, presenta el plan y espera su "dale".** Él suele pedir primero el resumen y luego la construcción.
+- Cada entrega lleva: qué cambió, cómo instalarlo (orden exacto), qué nodos revisar al importar y pruebas sugeridas en Telegram.
+- Prueba antes de entregar con **casos válidos, inválidos y duplicados** (skill `n8n-workflow-check`). Di con honestidad qué NO se ejecutó dentro de n8n.
+- Si una meta del plan no se cumple (por ejemplo, la reducción del prompt), dilo con el número real.
+
+## Infraestructura (resumen)
+Google Cloud **e2-micro** (`n8n-consignaciones`, us-east1-b, 1 GB RAM + 2 GB swap), Ubuntu 26.04, Docker con contenedores `n8n-n8n-1` y `n8n-caddy-1`.
+Dominio `pagoswilliam.duckdns.org` → IP **estática** `34.73.72.12`. Zona horaria `America/Bogota` (GENERIC_TIMEZONE y TZ).
+El usuario SSH tiene **sudo limitado** (`apt update` sí; `apt upgrade` y `reboot` no). Reiniciar desde la consola con **Restablecer** es seguro, porque la IP es estática.
+Para comandos de diagnóstico, actualizaciones, `docker compose` y límites de memoria, ver [docs/infraestructura.md](docs/infraestructura.md).
+
+## IDs y credenciales
+La hoja de Finanzas es `1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM`, el chat de Telegram de William es `7739445962` y el flujo de errores de Finanzas es `qMWZ59kHUj386TnZ`.
+Las credenciales se referencian por ID en los JSON (no son secretos, pero **nunca** incluyas tokens ni contraseñas).
+Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la hoja del Asistente), ver [docs/ids-y-credenciales.md](docs/ids-y-credenciales.md).
+
+## Flujos y versiones actuales
+| Flujo | Versión | Nodos | Notas |
+|---|---|---|---|
+| Finanzas - Bot | **v9** | 88 | Telegram; webhook conservado desde v7 |
+| Finanzas - Programado | **v5** | 32 | Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
+| Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
+| Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 5 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA` |
+| Agente de Pagos (WhatsApp) | estable | — | Hoja "Registro Pagos"; error workflow `CiiO6RLWImqCMVJS` |
+
+Arquitectura del bot de finanzas, acciones, pestañas de la hoja y modelo de datos: [docs/finanzas-arquitectura.md](docs/finanzas-arquitectura.md).
+Asistente personal y bot de pagos: [docs/asistente-y-pagos.md](docs/asistente-y-pagos.md).
+
+## Reglas de oro para editar flujos (resumen)
+1. **Una sola lectura** de la hoja por ejecución (`values:batchGet` en el nodo *Leer hoja* → *Tablas*). Las escrituras van **en lote** (*Ejecutar* → *Solicitudes* → *Escribir hoja*).
+2. **IDs únicos con el número de ejecución:** `sello = yyMMddHHmmss + '-' + $execution.id`.
+3. **Telegram siempre con `parse_mode: HTML`** y el texto escapado (`& < >`) al enviarlo. Sin formato explícito, n8n usa Markdown y `_` o `*` rompen el mensaje ("Bad request").
+4. Las **preguntas con botones** pasan por *Por confirmar* con candado anti doble toque (Reservar → Esperar 3 s → Verificar).
+5. **No renombrar pestañas ni encabezados** de la hoja: el bot lee por nombre. El archivo y las carpetas sí se pueden renombrar.
+6. Al editar un export de William: **conserva IDs de nodos, `webhookId`, credenciales y `settings.errorWorkflow`**. Entrega con `active: false`.
+7. **Nunca** usar `N8N_CONCURRENCY_PRODUCTION_LIMIT` (causó triplicados).
+
+Detalle de convenciones de código para nodos Code y JSON: ver [.claude/rules/n8n-flujos.md](.claude/rules/n8n-flujos.md) (se carga al editar JSON de flujos).
+
+## IA y cuotas
+Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Lite** de respaldo para audio e imagen, **Gemma 4 31B** de respaldo de texto (límite de **16K tokens por minuto**, el más ajustado). Groq Whisper como respaldo de audio.
+**No usar Gemini 3.8 Flash** (20 peticiones al día). Las cuotas diarias se reinician a medianoche del Pacífico (2:00 a. m. en Colombia; 3:00 a. m. desde noviembre). **No activar facturación.**
+
+## Estado y próximos pasos
+Errores abiertos (2 de octubre): audio que se malinterpreta, un préstamo registrado como gasto, `/suscripciones` incompleto y `/cobrar` sin opciones.
+Pendientes grandes: Bloque 2 de la auditoría (anular en vez de borrar y `/deshacer` completo), Asistente v4 (hábitos y memoria) y dashboard en Looker Studio, que William quiere aprender.
+Lista priorizada con causas y soluciones: [docs/pendientes.md](docs/pendientes.md). Lecciones aprendidas y diagnósticos: [docs/lecciones-aprendidas.md](docs/lecciones-aprendidas.md).
