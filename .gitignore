@@ -1,0 +1,14 @@
+# Secretos y entornos locales
+.env
+.env.*
+*.pem
+*.key
+
+# Paquetes y temporales
+*.zip
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Configuración local de Claude Code
+.claude/settings.local.json

@@ -22,10 +22,16 @@ La hoja de Finanzas es `1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM`, el chat d
 Las credenciales se referencian por ID en los JSON (no son secretos, pero **nunca** incluyas tokens ni contraseñas).
 Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la hoja del Asistente), ver [docs/ids-y-credenciales.md](docs/ids-y-credenciales.md).
 
+## Estructura del repositorio
+- `flujos/<agente>/` → exports JSON de n8n, nombrados `<agente>-<flujo>-v<N>.json` (minúsculas, sin espacios). Solo la **versión vigente**; las anteriores quedan en el historial de git.
+- `docs/` → documentación de referencia (infraestructura, IDs, arquitectura, pendientes, lecciones).
+- `.claude/rules/` → convenciones que se cargan al editar `flujos/**/*.json`.
+- Inventario de flujos y cómo exportar/importar: [flujos/README.md](flujos/README.md).
+
 ## Flujos y versiones actuales
 | Flujo | Versión | Nodos | Notas |
 |---|---|---|---|
-| Finanzas - Bot | **v9** | 88 | Telegram; webhook conservado desde v7 |
+| Finanzas - Bot | **v9** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v9.json` |
 | Finanzas - Programado | **v5** | 32 | Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
 | Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 5 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA` |
