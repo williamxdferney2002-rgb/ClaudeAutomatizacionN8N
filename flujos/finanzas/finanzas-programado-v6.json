@@ -1,0 +1,1324 @@
+{
+  "name": "Finanzas - Programado v6",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -5440,
+        512
+      ],
+      "id": "ce775c4c-1a1c-4e0d-ad18-42c3d7721a2c",
+      "name": "Cada día 7:00"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 19
+            },
+            {
+              "field": "months",
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -5440,
+        1072
+      ],
+      "id": "04f17e6f-dd99-40fc-a0be-bda455eeca1d",
+      "name": "Resúmenes"
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM/values:batchGet?ranges=%27Log%20Bot%27&ranges=%27Cuentas%27&ranges=%27Categor%C3%ADas%27&ranges=%27Movimientos%27&ranges=%27Cuotas%20tarjeta%27&ranges=%27Por%20confirmar%27&ranges=%27Documentos%27&ranges=%27Pr%C3%A9stamos%27&ranges=%27Cuotas%20pr%C3%A9stamo%27&ranges=%27Personas%27&ranges=%27Recurrentes%27&ranges=%27Par%C3%A1metros%27&ranges=%27Activos%27&ranges=%27Operaciones%20inversi%C3%B3n%27&ranges=%27Reventas%27&ranges=%27Extractos%27&ranges=%27Comercios%27&ranges=%27Presupuestos%27&ranges=%27Metas%27&ranges=%27Historial%27&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -5200,
+        688
+      ],
+      "id": "a18ee967-058f-45bd-9a7e-e476348cab32",
+      "name": "Leer hoja",
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 10000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convierte la lectura única de la hoja (batchGet) en tablas con número de fila y encabezados\nconst hojas = [\"Log Bot\", \"Cuentas\", \"Categorías\", \"Movimientos\", \"Cuotas tarjeta\", \"Por confirmar\", \"Documentos\", \"Préstamos\", \"Cuotas préstamo\", \"Personas\", \"Recurrentes\", \"Parámetros\", \"Activos\", \"Operaciones inversión\", \"Reventas\", \"Extractos\", \"Comercios\", \"Presupuestos\", \"Metas\", \"Historial\"];\nconst vr = ($input.first().json.valueRanges || []);\nconst out = { _h: {} };\nhojas.forEach((h, i) => {\n  const v = (vr[i] && vr[i].values) || [];\n  const head = (v[0] || []).map(x => String(x).trim());\n  out._h[h] = head;\n  out[h] = v.slice(1).map((fila, k) => {\n    const o = { row_number: k + 2 };\n    head.forEach((c, j) => { if (c) o[c] = fila[j] !== undefined ? fila[j] : ''; });\n    return o;\n  }).filter(o => Object.keys(o).some(c => c !== 'row_number' && o[c] !== '' && o[c] !== null));\n});\nreturn [{ json: out }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4976,
+        688
+      ],
+      "id": "25eafaec-f108-4999-b107-e7e69c6118a4",
+      "name": "Tablas"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f331e483-b263-4a2e-9225-4aee233f45b4",
+              "leftValue": "={{ $('Resúmenes').isExecuted }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4752,
+        688
+      ],
+      "id": "bd716dae-6c0f-4705-8388-ef3a8d5ee987",
+      "name": "¿Es resumen?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tz = 'America/Bogota';\nconst ahora = DateTime.now().setZone(tz);\nconst sello = ahora.toFormat('yyMMddHHmmss') + '-' + $execution.id;   // único aunque lleguen varias fotos en el mismo segundo\n// Montos: acepta 25000, \"25.000\", \"$ 25.000,50\", \"(3.797.362)\"\nconst num = v => {\n  if (typeof v === 'number') return v;\n  let s = String(v ?? '').trim();\n  if (!s || s === '-') return 0;\n  const neg = /^\\(.*\\)$/.test(s) || s.startsWith('-');\n  s = s.replace(/[^\\d,.]/g, '');\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if ((s.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? 0 : (neg ? -n : n);\n};\n// Fechas: acepta 2026-09-29, 29/09/2026, con hora, o número de serie de Sheets\nconst fecha = v => {\n  if (typeof v === 'number') return DateTime.fromISO('1899-12-30', { zone: tz }).plus({ days: Math.floor(v) });\n  const s = String(v || '').trim();\n  for (const f of ['yyyy-MM-dd', 'd/M/yyyy', 'd/M/yy', 'yyyy-MM-dd H:mm', 'yyyy-MM-dd H:mm:ss', 'd/M/yyyy H:mm', 'd/M/yyyy H:mm:ss']) {\n    const d = DateTime.fromFormat(s, f, { zone: tz });\n    if (d.isValid) return d;\n  }\n  return DateTime.fromISO(s, { zone: tz });\n};\nconst pesos = n => (n < 0 ? '-$' : '$') + String(Math.abs(Math.round(n))).replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n\n// Arma las consultas de precios: CoinGecko (cripto + dólar) y Stooq (ETF y acciones)\nconst T = $('Tablas').first().json;\nconst MAPA = { BTC: 'bitcoin', ETH: 'ethereum', LINK: 'chainlink', AVAX: 'avalanche-2', SOL: 'solana', ADA: 'cardano', XRP: 'ripple', DOT: 'polkadot', MATIC: 'matic-network', POL: 'polygon-ecosystem-token', DOGE: 'dogecoin', USDT: 'tether', USDC: 'usd-coin', BNB: 'binancecoin', LTC: 'litecoin' };\nconst activos = (T['Activos'] || []).filter(a => a.Activo && String(a['Activo vigente'] || 'Sí') !== 'No');\nconst cg = {}, bolsa = [];\nfor (const a of activos) {\n  const s = String(a.Activo).toUpperCase(), nota = String(a.Notas || '').match(/coingecko:([\\w-]+)/);\n  if (['ETF', 'Acción'].includes(a['Tipo activo'])) { const sim = String(a['Símbolo GOOGLEFINANCE'] || s).split(':').pop().toLowerCase(); bolsa.push({ activo: s, url: `https://stooq.com/q/l/?s=${sim}.us&f=sd2t2c&h&e=csv` }); }\n  else if (nota || MAPA[s]) cg[s] = nota ? nota[1] : MAPA[s];\n}\nconst ids = [...new Set(['bitcoin', ...Object.values(cg)])];\nreturn [{ json: { fuente: 'fx', url: 'https://open.er-api.com/v6/latest/USD' } }, { json: { fuente: 'coingecko', mapa: cg, url: `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd,cop` } }, ...bolsa.map(b => ({ json: { fuente: 'stooq', ...b } }))];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4512,
+        512
+      ],
+      "id": "3f1a231a-dc6d-44ff-8e03-e614030b3c02",
+      "name": "Pedidos de precios"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -4288,
+        512
+      ],
+      "id": "aa5ea082-43a3-44bc-bb47-12420cf687de",
+      "name": "Consultar precios",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tz = 'America/Bogota';\nconst ahora = DateTime.now().setZone(tz);\nconst sello = ahora.toFormat('yyMMddHHmmss') + '-' + $execution.id;   // único aunque lleguen varias fotos en el mismo segundo\n// Montos: acepta 25000, \"25.000\", \"$ 25.000,50\", \"(3.797.362)\"\nconst num = v => {\n  if (typeof v === 'number') return v;\n  let s = String(v ?? '').trim();\n  if (!s || s === '-') return 0;\n  const neg = /^\\(.*\\)$/.test(s) || s.startsWith('-');\n  s = s.replace(/[^\\d,.]/g, '');\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if ((s.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? 0 : (neg ? -n : n);\n};\n// Fechas: acepta 2026-09-29, 29/09/2026, con hora, o número de serie de Sheets\nconst fecha = v => {\n  if (typeof v === 'number') return DateTime.fromISO('1899-12-30', { zone: tz }).plus({ days: Math.floor(v) });\n  const s = String(v || '').trim();\n  for (const f of ['yyyy-MM-dd', 'd/M/yyyy', 'd/M/yy', 'yyyy-MM-dd H:mm', 'yyyy-MM-dd H:mm:ss', 'd/M/yyyy H:mm', 'd/M/yyyy H:mm:ss']) {\n    const d = DateTime.fromFormat(s, f, { zone: tz });\n    if (d.isValid) return d;\n  }\n  return DateTime.fromISO(s, { zone: tz });\n};\nconst pesos = n => (n < 0 ? '-$' : '$') + String(Math.abs(Math.round(n))).replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n\n// Actualiza precios en Activos, el dólar en Parámetros y (una sola vez) el costo de los saldos iniciales\nconst T = $('Tablas').first().json;\nconst pedidos = $('Pedidos de precios').all().map(i => i.json);\nconst resp = $input.all().map(i => i.json);\nconst ops = [], hoy = ahora.toFormat('yyyy-MM-dd');\nlet usdcop = 0, usdFx = 0; const precio = {};\npedidos.forEach((p, i) => {\n  const r = resp[i] || {};\n  if (p.fuente === 'coingecko' && r.bitcoin) {\n    if (r.bitcoin.usd && r.bitcoin.cop) usdcop = r.bitcoin.cop / r.bitcoin.usd;\n    for (const [s, id] of Object.entries(p.mapa)) if (r[id] && r[id].usd) precio[s] = r[id].usd;\n  }\n  if (p.fuente === 'fx' && r.rates && r.rates.COP) usdFx = r.rates.COP;   // tasa de mercado, como la de Google\n  if (p.fuente === 'stooq') { const l = String(r.data || '').trim().split('\\n'); const v = (l[1] || '').split(','); const c = parseFloat(v[4]); if (c > 0) precio[p.activo] = c; }\n});\nif (usdFx) usdcop = usdFx;               // el dólar oficial manda; el de CoinGecko queda de respaldo\nif (usdcop) precio.COPW = 1 / usdcop;   // COPW es una stablecoin en pesos\nfor (const a of (T['Activos'] || []).filter(a => a.Activo)) {\n  const s = String(a.Activo).toUpperCase();\n  if (precio[s]) ops.push({ tabla: 'Activos', tipo: 'update', row: a.row_number, cambios: { 'Precio manual USD': precio[s], 'Fecha precio manual': hoy } });\n}\nconst fila = (T['Parámetros'] || []).find(r => r.Clave === 'usdcop_manual');\nif (usdcop && fila) ops.push({ tabla: 'Parámetros', tipo: 'update', row: fila.row_number, cambios: { Valor: Math.round(usdcop * 100) / 100 } });\n// Punto de partida: saldos iniciales sin costo → costo = valor de hoy\nconst dolar = usdcop || num(fila && fila.Valor) || 4000;\nfor (const o of (T['Operaciones inversión'] || []).filter(o => o['Tipo operación'] === 'Saldo inicial' && !num(o['Total COP']))) {\n  const pu = precio[String(o.Activo).toUpperCase()] || num(o['Precio unitario USD']);\n  const usd = num(o.Cantidad) * pu;\n  ops.push({ tabla: 'Operaciones inversión', tipo: 'update', row: o.row_number, cambios: { 'Precio unitario USD': pu, 'Total USD': Math.round(usd * 100) / 100, 'Total COP': Math.round(usd * dolar), 'Estado revisión': 'OK', Notas: `Costo = valor del ${hoy} (punto de partida)` } });\n}\nreturn [{ json: { ops, precios: precio, usdcop } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4064,
+        512
+      ],
+      "id": "6696ec10-807b-4e9b-bb3b-5403f48f8437",
+      "name": "Precios"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tz = 'America/Bogota';\nconst ahora = DateTime.now().setZone(tz);\nconst sello = ahora.toFormat('yyMMddHHmmss') + '-' + $execution.id;   // único aunque lleguen varias fotos en el mismo segundo\n// Montos: acepta 25000, \"25.000\", \"$ 25.000,50\", \"(3.797.362)\"\nconst num = v => {\n  if (typeof v === 'number') return v;\n  let s = String(v ?? '').trim();\n  if (!s || s === '-') return 0;\n  const neg = /^\\(.*\\)$/.test(s) || s.startsWith('-');\n  s = s.replace(/[^\\d,.]/g, '');\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if ((s.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? 0 : (neg ? -n : n);\n};\n// Fechas: acepta 2026-09-29, 29/09/2026, con hora, o número de serie de Sheets\nconst fecha = v => {\n  if (typeof v === 'number') return DateTime.fromISO('1899-12-30', { zone: tz }).plus({ days: Math.floor(v) });\n  const s = String(v || '').trim();\n  for (const f of ['yyyy-MM-dd', 'd/M/yyyy', 'd/M/yy', 'yyyy-MM-dd H:mm', 'yyyy-MM-dd H:mm:ss', 'd/M/yyyy H:mm', 'd/M/yyyy H:mm:ss']) {\n    const d = DateTime.fromFormat(s, f, { zone: tz });\n    if (d.isValid) return d;\n  }\n  return DateTime.fromISO(s, { zone: tz });\n};\nconst pesos = n => (n < 0 ? '-$' : '$') + String(Math.abs(Math.round(n))).replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n\nconst T = $('Tablas').first().json;\nconst norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\nconst movs = (T['Movimientos'] || []).filter(r => r.ID).map(r => ({ ...r, _fecha: fecha(r.Fecha), _monto: num(r.Monto) }));\nconst ENTRA = ['Ingreso', 'Préstamo recibido', 'Abono recibido', 'Cobro cuota', 'Ajuste', 'Venta reventa'];\nconst SALE = ['Gasto', 'Préstamo dado', 'Abono pagado', 'Transferencia', 'Pago tarjeta', 'Compra reventa'];\nconst DEST = ['Transferencia', 'Pago tarjeta'];\nconst cuentas = (T['Cuentas'] || []).filter(c => c.ID).map(c => {\n  const ancla = fecha(c['Fecha saldo inicial']);\n  const desde = ancla.isValid ? ancla.startOf('day') : DateTime.fromISO('1900-01-01');\n  const mv = movs.filter(r => r._fecha.isValid && r._fecha >= desde);\n  const sum = (campo, tipos) => mv.filter(r => String(r[campo]) === String(c.ID) && tipos.includes(r.Tipo)).reduce((s, r) => s + r._monto, 0);\n  const ent = sum('Cuenta', ENTRA), sal = sum('Cuenta', SALE), dst = sum('Cuenta destino', DEST);\n  const si = num(c['Saldo inicial']), tasa = num(c['Tasa EA']);\n  let saldo;\n  if (c.Tipo === 'Inversión') saldo = null;\n  else if (c.Tipo === 'Tarjeta de crédito') saldo = si - ent + sal - dst;\n  else if (c.Tipo === 'CDT') { const fin = fecha(c['Fecha vencimiento']), hasta = fin.isValid && fin < ahora ? fin : ahora;\n    saldo = si * Math.pow(1 + tasa, Math.max(0, hasta.diff(desde, 'days').days) / 365) + ent - sal + dst; }\n  else saldo = si + ent - sal + dst;\n  return { ID: c.ID, Nombre: c.Nombre, Entidad: c.Entidad, Tipo: c.Tipo, Padre: c['Cuenta padre'] || '', Alias: String(c.Alias || ''),\n    Activa: String(c.Activa || 'Sí') !== 'No', cobra4x1000: String(c['Cobra 4x1000']) === 'Sí', Cupo: num(c.Cupo), tasa,\n    corte: num(c['Día de corte']), pago: num(c['Día de pago']), saldo, ancla: desde.toFormat('yyyy-MM-dd'), vence: c['Fecha vencimiento'] || '', row_number: c.row_number };\n});\nconst cta = id => cuentas.find(c => c.ID === id) || {};\nconst nombreDe = id => cta(id).Nombre || id;\n// Tarjetas: próximo pago, mínimo (cuotas que vencen hasta esa fecha) y total (toda la deuda)\nconst ctasT = (T['Cuotas tarjeta'] || []).filter(r => r.ID);\nconst tarjetas = cuentas.filter(c => c.Tipo === 'Tarjeta de crédito' && c.Activa).map(c => {\n  const dia = c.pago || 10;\n  let prox = ahora.set({ day: Math.min(dia, ahora.daysInMonth) }).startOf('day');\n  if (prox < ahora.startOf('day')) { const m = ahora.plus({ months: 1 }); prox = m.set({ day: Math.min(dia, m.daysInMonth) }).startOf('day'); }\n  const pend = ctasT.filter(r => r.Cuenta === c.ID && !['Pagada', 'Anulada'].includes(r.Estado));\n  const minimo = pend.filter(r => fecha(r['Fecha de pago']) <= prox.endOf('day')).reduce((s, r) => s + num(r['Valor cuota']), 0);\n  return { ID: c.ID, Nombre: c.Nombre, deuda: c.saldo, cupo: c.Cupo, prox: prox.toFormat('yyyy-MM-dd'), minimo, total: c.saldo };\n});\n// Personas y deudas: informal (préstamos dados sin préstamo formal − abonos) + cuotas pendientes de préstamos\nconst personas = (T['Personas'] || []).filter(p => p.Nombre);\nconst prestamos = (T['Préstamos'] || []).filter(p => p.ID);\nconst cuotasP = (T['Cuotas préstamo'] || []).filter(q => q['ID préstamo']);\nconst nombresPersona = [...new Set([...personas.map(p => p.Nombre), ...movs.map(r => r.Persona).filter(Boolean), ...prestamos.map(p => p.Persona)])];\nconst deudas = nombresPersona.map(nombre => {\n  const deP = movs.filter(r => norm(r.Persona) === norm(nombre));\n  const informal = deP.filter(r => r.Tipo === 'Préstamo dado' && !String(r.Referencia || '').startsWith('PR-')).reduce((s, r) => s + r._monto, 0)\n    - deP.filter(r => r.Tipo === 'Abono recibido').reduce((s, r) => s + r._monto, 0);\n  const cuotas = cuotasP.filter(q => norm(q.Persona) === norm(nombre) && !['Pagada', 'Anulada'].includes(q.Estado)).reduce((s, q) => s + num(q['Valor cuota']) - num(q['Valor recibido']), 0);\n  const yoDebo = deP.filter(r => r.Tipo === 'Préstamo recibido').reduce((s, r) => s + r._monto, 0) - deP.filter(r => r.Tipo === 'Abono pagado').reduce((s, r) => s + r._monto, 0);\n  const p = personas.find(x => norm(x.Nombre) === norm(nombre)) || {};\n  return { nombre, alias: String(p.Alias || ''), relacion: p['Relación'] || '', informal, cuotas, total: informal + cuotas, yoDebo, row_number: p.row_number || null };\n});\n// Inversiones: cantidad, costo (promedio), valor actual y ganancia por activo\nconst Pm = k => ((T['Parámetros'] || []).find(r => r.Clave === k) || {}).Valor;\nconst usdcop = num(Pm('usdcop_manual')) || 4000;\nconst activos = (T['Activos'] || []).filter(a => a.Activo).map(a => ({ simbolo: String(a.Activo), nombre: a.Nombre || a.Activo, tipo: a['Tipo activo'] || 'Cripto', cuenta: a.Cuenta || '',\n  precio: num(a['Precio manual USD']), fechaPrecio: a['Fecha precio manual'] || '', vigente: String(a['Activo vigente'] || 'Sí') !== 'No', notas: String(a.Notas || ''), row_number: a.row_number }));\nconst opsInv = (T['Operaciones inversión'] || []).filter(o => o.ID);\nconst portafolio = activos.map(a => {\n  const os = opsInv.filter(o => String(o.Activo).toUpperCase() === a.simbolo.toUpperCase()).sort((x, y) => fecha(x.Fecha) - fecha(y.Fecha));\n  let cantidad = 0, costo = 0, realizado = 0;\n  for (const o of os) {\n    const q = num(o.Cantidad), t = o['Tipo operación'], tcop = num(o['Total COP']);\n    if (t === 'Saldo inicial' || t === 'Compra') { cantidad += q; costo += tcop || num(o['Total USD']) * usdcop; }\n    else if (t === 'Venta') { const cu = cantidad ? costo / cantidad : 0; realizado += tcop - cu * q; costo -= cu * q; cantidad -= q; }\n    else if (t === 'Ajuste' || t === 'Recompensa') cantidad += q;\n  }\n  const valor = cantidad * a.precio * usdcop;\n  return { ...a, cantidad, costo, valor, ganancia: valor - costo, realizado };\n});\nconst valorInversion = id => portafolio.filter(p => p.cuenta === id).reduce((s, p) => s + p.valor, 0);\n// Reventas: inventario y ganancia\nconst reventas = (T['Reventas'] || []).filter(r => r.ID).map(r => {\n  const c = num(r.Cantidad), v = num(r['Cantidad vendida']), u = num(r['Cantidad uso propio']), costo = num(r['Costo total']), unit = c ? costo / c : 0;\n  return { ID: r.ID, articulo: r['Artículo'], cantidad: c, vendidas: v, uso: u, quedan: c - v - u, costo, unit, vendido: num(r['Total vendido']),\n    ganancia: num(r['Total vendido']) - unit * v, estado: r.Estado, fecha: r['Fecha compra'], row_number: r.row_number };\n});\n// Presupuestos, metas y fondo de emergencia\nconst mesAct = ahora.toFormat('yyyy-MM');\nconst mesDe = v => {\n  if (v === '' || v === null || v === undefined) return '';\n  if (typeof v === 'number') return fecha(v).toFormat('yyyy-MM');\n  const s = String(v).trim(); const m = s.match(/^(\\d{4})-(\\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2, '0')}`;\n  const f = fecha(s); if (f.isValid) return f.toFormat('yyyy-MM');\n  const m2 = s.match(/(\\d{1,2})\\/(\\d{4})$/); return m2 ? `${m2[2]}-${m2[1].padStart(2, '0')}` : '';\n};\nconst presupuestos = (T['Presupuestos'] || []).filter(p => p['Categoría']).map(p => ({ mes: mesDe(p.Mes), categoria: p['Categoría'], monto: num(p.Monto), row_number: p.row_number }));\nconst gastoCat = mes => { const o = {}; for (const r of movs) if (r.Tipo === 'Gasto' && r._fecha.isValid && r._fecha.toFormat('yyyy-MM') === mes) { const c = r['Categoría'] || 'Sin categoría'; o[c] = (o[c] || 0) + r._monto; } return o; };\nconst estadoPres = mes => { const g = gastoCat(mes); return presupuestos.filter(p => p.mes === mes).map(p => ({ ...p, gastado: g[p.categoria] || 0, pct: p.monto ? (g[p.categoria] || 0) / p.monto : 0 })); };\nconst gastoMes = mes => Object.values(gastoCat(mes)).reduce((s, v) => s + v, 0);\nconst mesesAtras = [1, 2, 3].map(i => ahora.minus({ months: i }).toFormat('yyyy-MM')).filter(m => gastoMes(m) > 0);\nconst gastoPromedio = mesesAtras.length ? mesesAtras.reduce((s, m) => s + gastoMes(m), 0) / mesesAtras.length : gastoMes(mesAct);\nconst disponible = cuentas.filter(c => c.Activa && !['Tarjeta de crédito', 'Inversión', 'CDT'].includes(c.Tipo) && c.saldo != null).reduce((s, c) => s + c.saldo, 0);\nconst metas = (T['Metas'] || []).filter(m => m.ID).map(m => ({ ID: m.ID, nombre: m.Nombre, cuenta: m.Cuenta, objetivo: num(m['Monto objetivo']), fin: m['Fecha objetivo'], estado: m.Estado || 'Activa', row_number: m.row_number }));\nconst avanceMeta = m => { const c = cuentas.find(x => x.ID === m.cuenta) || {}; const tiene = Math.max(0, c.saldo || 0); const f = fecha(m.fin);\n  const mesesF = f.isValid ? Math.max(1, Math.ceil(f.diff(ahora, 'months').months)) : null;\n  return { ...m, tiene, pct: m.objetivo ? tiene / m.objetivo : 0, falta: Math.max(0, m.objetivo - tiene), porMes: mesesF ? Math.max(0, m.objetivo - tiene) / mesesF : null, cuentaNombre: c.Nombre || m.cuenta }; };\nconst resumenPrestamos = prestamos.map(p => {\n  const qs = cuotasP.filter(q => q['ID préstamo'] === p.ID).sort((a, b) => num(a['Nº']) - num(b['Nº']));\n  const pend = qs.filter(q => !['Pagada', 'Anulada'].includes(q.Estado));\n  return { ID: p.ID, persona: p.Persona, monto: num(p['Monto prestado']), n: num(p['Nº cuotas']), valor: num(p['Valor cuota']), frecuencia: p.Frecuencia,\n    cuenta_cobro: p['Cuenta de cobro habitual'] || '', pagadas: qs.length - pend.length, pendientes: pend.length,\n    saldo: pend.reduce((s, q) => s + num(q['Valor cuota']) - num(q['Valor recibido']), 0),\n    proxima: pend[0] ? { n: num(pend[0]['Nº']), fecha: pend[0].Fecha, valor: num(pend[0]['Valor cuota']) - num(pend[0]['Valor recibido']) } : null };\n});\n\n// Revisión diaria: cobros recurrentes, cuotas por cobrar, pago de tarjeta y (domingos) revisión de rendimientos\nconst d0 = ahora.startOf('day'), hoyTxt = d0.toFormat('yyyy-MM-dd'), creado = ahora.toFormat('yyyy-MM-dd HH:mm');\nconst P = k => ((T['Parámetros'] || []).find(r => r.Clave === k) || {}).Valor;\nconst ops = [], mensajes = [];\nlet k = 0;\nconst diaEs = f => f.setLocale('es').toFormat(\"cccc d 'de' LLLL\");\n// Si el servidor estuvo apagado, se revisan también los días que no corrió (máx. 7)\nconst ult = fecha(P('ultima_agenda'));\nconst diasRev = [];\nfor (let x = ult.isValid && ult < d0 ? DateTime.max(ult.plus({ days: 1 }).startOf('day'), d0.minus({ days: 7 })) : d0; x <= d0; x = x.plus({ days: 1 })) diasRev.push(x);\nconst filaU = (T['Parámetros'] || []).find(x => x.Clave === 'ultima_agenda');\nif (filaU) ops.push({ tabla: 'Parámetros', tipo: 'update', row: filaU.row_number, cambios: { Valor: hoyTxt } });\nelse ops.push({ tabla: 'Parámetros', tipo: 'append', fila: { Clave: 'ultima_agenda', Valor: hoyTxt, 'Descripción': 'Último día que revisó la Agenda (para recuperar días perdidos)' } });\n// Para no preguntar dos veces por el mismo cobro (por ejemplo, si se ejecuta a mano)\nconst yaPreguntado = (recId, cobro, anual) => (T['Por confirmar'] || []).some(x => x['ID relacionado'] === recId && fecha(x.Creado).isValid && fecha(x.Creado).hasSame(cobro, anual ? 'year' : 'month') && fecha(x.Creado) >= cobro.minus({ days: 1 }));\n\n// 1) Recurrentes (suscripciones y gastos fijos)\nfor (const r of (T['Recurrentes'] || []).filter(r => r.ID && String(r.Activa || 'Sí') !== 'No' && (r.Tipo || 'Gasto') === 'Gasto')) {\n  const dia = num(r['Día']), total = num(r['Monto total']), frec = r.Frecuencia || 'Mensual';\n  if (!dia || !total || !r.Cuenta || !['Mensual', 'Anual'].includes(frec)) continue;\n  const mesA = num(r['Mes (si es anual)']);\n  if (frec === 'Anual' && !mesA) continue;\n  const cobroDe = x => { const m = frec === 'Anual' ? x.set({ month: mesA }) : x; return m.set({ day: Math.min(dia, m.set({ day: 1 }).daysInMonth) }).startOf('day'); };\n  let cobro = cobroDe(d0);\n  const antes = num(r['Recordar días antes']) || num(P('dias_aviso_recurrente')) || 2;\n  // \"Personas que me pagan\" admite montos fijos: \"Paula: 9000, Andrea: 9000\"\n  const lista = String(r['Personas que me pagan'] || '').split(',').map(x => x.trim()).filter(Boolean)\n    .map(x => { const m = x.match(/^(.+?)\\s*[:=]\\s*\\$?([\\d.,]+)\\s*$/); return m ? { p: m[1].trim(), v: Math.round(num(m[2])) } : { p: x, v: 0 }; });\n  const fijos = lista.length > 0 && lista.every(x => x.v > 0);\n  const part = Math.max(1, num(r['Participantes (contándome)']) || 1);\n  let miParte, otros;\n  if (fijos) { otros = lista.reduce((x, y) => x + y.v, 0); miParte = total - otros; }\n  else { miParte = Math.round(total / part); otros = total - miParte; }\n  if (cobro.minus({ days: antes }).hasSame(d0, 'day'))\n    mensajes.push({ texto: `🔔 El ${diaEs(cobro)} se cobra ${r.Nombre}: ${pesos(total)} en ${nombreDe(r.Cuenta)}.` + (otros > 0 ? (miParte > 0 ? ` Tu parte: ${pesos(miParte)}.` : ' Lo pagan los demás.') : '') });\n  const diaCobro = diasRev.find(x => cobroDe(x).hasSame(x, 'day'));\n  if (diaCobro && !yaPreguntado(r.ID, diaCobro, frec === 'Anual')) {\n    cobro = diaCobro;\n    const tarde = !diaCobro.hasSame(d0, 'day'), fCobro = diaCobro.toFormat('yyyy-MM-dd');\n    const movsR = [];\n    if (miParte > 0) movsR.push({ tipo: 'Gasto', monto: miParte, cuenta: r.Cuenta, categoria: r['Categoría'] || 'Suscripciones', detalle: r.Nombre, fecha: fCobro });\n    if (fijos) lista.forEach(x => movsR.push({ tipo: 'Préstamo dado', monto: x.v, cuenta: r.Cuenta, persona: x.p, detalle: `${r.Nombre} (su parte)`, fecha: fCobro }));\n    else if (otros > 0) {\n      if (lista.length) { const c = Math.round(otros / lista.length); lista.forEach((x, i) => movsR.push({ tipo: 'Préstamo dado', monto: i === lista.length - 1 ? otros - c * (lista.length - 1) : c, cuenta: r.Cuenta, persona: x.p, detalle: `${r.Nombre} (su parte)`, fecha: fCobro })); }\n      else movsR.push({ tipo: 'Préstamo dado', monto: otros, cuenta: r.Cuenta, persona: `Grupo ${r.Nombre}`, detalle: `${r.Nombre} (parte de los demás)`, fecha: fCobro });\n    }\n    if (miParte < 0) movsR.push({ tipo: 'Ingreso', monto: -miParte, cuenta: r.Cuenta, categoria: 'Otros ingresos', detalle: `${r.Nombre}: diferencia que cobras de más`, fecha: fCobro });\n    const idpc = `PC-${sello}-${++k}`;\n    const quien = lista.length ? lista.map(x => x.v ? `${x.p} ${pesos(x.v)}` : x.p).join(', ') : '';\n    const texto = `💳 ${tarde ? 'El ' + diaEs(diaCobro) + ' se cobró' : 'Hoy se cobra'} ${r.Nombre}: ${pesos(total)} en ${nombreDe(r.Cuenta)}.` +\n      (otros > 0 ? `\\n${miParte > 0 ? 'Tu parte: ' + pesos(miParte) + '; ' : ''}por cobrar ${pesos(otros)}${quien ? ' (' + quien + ')' : ''}.` + (miParte < 0 ? ` Cobras ${pesos(-miParte)} de más.` : '') : '') + '\\n¿Lo registro?';\n    ops.push({ tabla: 'Por confirmar', tipo: 'append', fila: { ID: idpc, Creado: creado, 'Acción pendiente': 'registrar', 'ID relacionado': r.ID, 'Tipo de duda': 'confirmar',\n      'Datos (JSON)': JSON.stringify({ tipo: 'confirmar', accion_json: { accion: 'registrar', movimientos: movsR, origen: 'Programado', operacion: `OP-${sello}-${k}` } }),\n      Pregunta: texto, Opciones: '', 'ID mensaje': '', Estado: 'Pendiente', Respuesta: '', 'Fecha respuesta': '', Intentos: 0, Expira: ahora.plus({ days: 3 }).toFormat('yyyy-MM-dd HH:mm') } });\n    mensajes.push({ texto, pc: idpc });\n  }\n}\n\n// 2) Cuotas de préstamos por cobrar (el día que vencen y 3 días después si siguen pendientes)\n// v6: con botones de cuenta; un toque registra el pago (lo procesa el bot, que verifica que la cuota siga pendiente)\nconst yaAvisoCuota = (qId, dia) => (T['Por confirmar'] || []).some(x => x['ID relacionado'] === qId && fecha(x.Creado).isValid && fecha(x.Creado).hasSame(dia, 'day'));\nfor (const q of (T['Cuotas préstamo'] || []).filter(q => q['ID préstamo'] && !['Pagada', 'Anulada'].includes(q.Estado) && q.Fecha)) {\n  const f = fecha(q.Fecha); if (!f.isValid) continue;\n  const falta = Math.round(num(q['Valor cuota']) - num(q['Valor recibido']));\n  const hoyVence = f.hasSame(d0, 'day'), hace3 = f.plus({ days: 3 }).hasSame(d0, 'day');\n  if (!(hoyVence || hace3) || falta <= 0 || yaAvisoCuota(q.ID, d0)) continue;\n  const pr = (T['Préstamos'] || []).find(p => p.ID === q['ID préstamo']) || {};\n  const ids = [...new Set([pr['Cuenta de cobro habitual'], 'CTA-07', 'CTA-01', 'CTA-04', 'CTA-03'].filter(id => id && cuentas.some(c => c.ID === id && c.Activa)))].slice(0, 3);\n  const opciones = ids.map(id => ({ texto: nombreDe(id), valor: id }));\n  const botones = opciones.map((o, i) => ({ texto: String(o.texto).slice(0, 28), valor: String(i) }));\n  while (botones.length < 3) botones.push({ texto: '·', valor: 'no' });\n  botones.push({ texto: '⏰ Aún no', valor: 'no' });\n  const idpc = `PC-${sello}-${++k}`;\n  const texto = (hoyVence ? `💰 Hoy vence la cuota ${q['Nº']} de ${q.Persona} (${pesos(falta)}, préstamo ${q['ID préstamo']}).` : `⏳ La cuota ${q['Nº']} de ${q.Persona} (${pesos(falta)}) venció hace 3 días y sigue pendiente.`) +\n    `\\n¿Ya te pagó? Toca la cuenta donde te llegó y lo registro.\\nSi fue otro valor, escríbeme \"${q.Persona} me pagó 100 mil\".`;\n  ops.push({ tabla: 'Por confirmar', tipo: 'append', fila: { ID: idpc, Creado: creado, 'Acción pendiente': 'cobrar_cuota', 'ID relacionado': q.ID, 'Tipo de duda': 'cuenta',\n    'Datos (JSON)': JSON.stringify({ tipo: 'opcion', idx: null, campo: 'cuenta', opciones, accion_json: { accion: 'cobrar_cuota', prestamo: q['ID préstamo'], persona: q.Persona, persona_ok: true, monto: falta, cuota_id: q.ID, recordar: hoyVence, origen: 'Programado' } }),\n    Pregunta: texto, Opciones: JSON.stringify(botones), 'ID mensaje': '', Estado: 'Pendiente', Respuesta: '', 'Fecha respuesta': '', Intentos: 0, Expira: ahora.plus({ days: 7 }).toFormat('yyyy-MM-dd HH:mm') } });\n  mensajes.push({ texto, pc: idpc, botones });\n}\n\n// 2b) v6, domingos: pagos recurrentes activos que no se pueden recordar porque les falta información\nif (ahora.weekday === 7) {\n  const inc = (T['Recurrentes'] || []).filter(r => r.ID && String(r.Activa || 'Sí') !== 'No' && (r.Tipo || 'Gasto') === 'Gasto').map(r => ({ r, falta: [\n    !num(r['Día']) && 'día de cobro', !num(r['Monto total']) && 'valor', !r.Cuenta && 'cuenta',\n    !['Mensual', 'Anual'].includes(r.Frecuencia || 'Mensual') && 'frecuencia (Mensual o Anual)', (r.Frecuencia === 'Anual' && !num(r['Mes (si es anual)'])) && 'mes'].filter(Boolean) })).filter(x => x.falta.length);\n  if (inc.length) mensajes.push({ texto: '⚠️ Estos pagos recurrentes no te los puedo recordar porque les falta información:\\n' + inc.map(x => `• ${x.r.Nombre || x.r.ID}: falta ${x.falta.join(', ')}`).join('\\n') +\n    '\\nArréglalo en la pestaña Recurrentes o dime, por ejemplo, \"Spotify vale 30.508 y se cobra el 2 desde Bancolombia\".' });\n}\n\n// 3) Pago de tarjetas\nconst diasT = num(P('dias_aviso_tarjeta')) || 3;\nfor (const t of tarjetas) {\n  const prox = fecha(t.prox);\n  if (prox.minus({ days: diasT }).hasSame(d0, 'day') || prox.hasSame(d0, 'day'))\n    mensajes.push({ texto: `💳 ${prox.hasSame(d0, 'day') ? 'Hoy' : 'El ' + diaEs(prox)} vence el pago de la ${t.Nombre}.\\n• Mínimo aprox.: ${pesos(t.minimo)}\\n• Total: ${pesos(t.total)}\\nCuando pagues, dime por ejemplo \"pagué el total de la tarjeta desde Nu\".` });\n}\n\n// 3b) CDT: aviso 5 días antes y el día del vencimiento\nfor (const c of cuentas.filter(c => c.Activa && c.Tipo === 'CDT' && c.vence)) {\n  const v = fecha(c.vence); if (!v.isValid) continue;\n  const faltan = Math.round(v.startOf('day').diff(d0, 'days').days);\n  if (faltan === 5) mensajes.push({ texto: `🏦 Tu ${c.Nombre} vence en 5 días (${diaEs(v)}) con ≈ ${pesos(c.saldo)}. Piensa si lo renuevas o a qué cuenta pasas la plata.` });\n  if (faltan === 0) mensajes.push({ texto: `🏦 Hoy vence tu ${c.Nombre} (≈ ${pesos(c.saldo)}). Cuando la plata llegue, dime por ejemplo \"pasé ${Math.round(c.saldo / 1000)} mil del CDT a Nu\" y si lo renovaste, \"crea un CDT…\".` });\n}\n\n// 4) Domingo: revisión de rendimientos\nif (ahora.weekday === 7) {\n  const conTasa = cuentas.filter(c => c.Activa && c.tasa && c.Tipo !== 'CDT' && c.saldo != null);\n  if (conTasa.length) mensajes.push({ texto: '🔄 Revisión semanal de rendimientos. Según mis registros:\\n' + conTasa.map(c => `• ${c.Nombre}: ${pesos(c.saldo)}`).join('\\n') +\n    '\\n\\nRespóndeme con el saldo real de cada uno (uno por mensaje), por ejemplo: \"Rappi Ahorro tiene 431.200\", y registro lo que te han rendido.' });\n}\nreturn [{ json: { ops: [...($('Precios').isExecuted ? $('Precios').first().json.ops : []), ...ops], mensajes } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3824,
+        512
+      ],
+      "id": "88ac5e33-d2aa-44e1-8601-c2edbfaab9a5",
+      "name": "Agenda"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convierte las filas en pedidos a la API de Google Sheets: un \"append\" por pestaña y un \"batchUpdate\" para las ediciones\nconst T = $('Tablas').first().json;\nconst ops = $('Agenda').first().json.ops || [];\nconst H = T._h || {};\nconst base = 'https://sheets.googleapis.com/v4/spreadsheets/1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM';\nconst col = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };\nconst COL_FECHA = /^(Fecha|Creado|Modificado|Expira|Actualizado|Hora|Mes)/i;\nconst limpio = (v, col) => (typeof v === 'string' && (/^[=+@]/.test(v) || (!COL_FECHA.test(col || '') && /^\\d{1,2}[\\/:-]\\d{1,2}([\\/-]\\d{2,4})?$/.test(v.trim())))) ? \"'\" + v : (v === undefined || v === null ? '' : v);\nconst items = [], porTabla = {};\nfor (const o of ops.filter(o => o.tipo === 'append' && (H[o.tabla] || []).length)) (porTabla[o.tabla] = porTabla[o.tabla] || []).push(H[o.tabla].map(h => limpio(o.fila[h], h)));\nfor (const [t, filas] of Object.entries(porTabla))\n  items.push({ json: { url: `${base}/values/${encodeURIComponent(\"'\" + t + \"'!A1\")}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, body: { values: filas } } });\nconst data = [];\nfor (const o of ops.filter(o => o.tipo === 'update'))\n  for (const [c, v] of Object.entries(o.cambios)) { const i = (H[o.tabla] || []).indexOf(c); if (i >= 0) data.push({ range: `'${o.tabla}'!${col(i)}${o.row}`, values: [[limpio(v, c)]] }); }\nif (data.length) items.push({ json: { url: `${base}/values:batchUpdate`, body: { valueInputOption: 'USER_ENTERED', data } } });\nreturn items.length ? items : [{ json: { vacio: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3600,
+        512
+      ],
+      "id": "2c96399c-3879-4a5b-8ea3-6acd9f7ec96d",
+      "name": "Solicitudes"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b7c3d002-c276-4143-831d-fa2f33c3fe40",
+              "leftValue": "={{ !$json.vacio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3360,
+        512
+      ],
+      "id": "44445709-42d7-49e5-8f5c-5036b82b9570",
+      "name": "¿Hay escritura?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 200
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -3136,
+        384
+      ],
+      "id": "1ac8c72c-4299-4cb4-93db-80157cd57a93",
+      "name": "Escribir hoja",
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 10000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return ($('Agenda').first().json.mensajes || []).map(m => ({ json: m }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2912,
+        512
+      ],
+      "id": "4ace594c-67f7-404c-b1f7-958cbe4f8cb8",
+      "name": "Mensajes",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3f7397be-3dfc-42d9-9085-5b288c7b3ef7",
+              "leftValue": "={{ !!$json.pc }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2672,
+        512
+      ],
+      "id": "277d161c-8a75-4863-a931-9375a2f6148c",
+      "name": "¿Con botones?"
+    },
+    {
+      "parameters": {
+        "chatId": "7739445962",
+        "text": "={{ String($json.texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Registrar",
+                    "additionalFields": {
+                      "callback_data": "={{ 'pc:' + $json.pc + ':si' }}"
+                    }
+                  },
+                  {
+                    "text": "❌ No",
+                    "additionalFields": {
+                      "callback_data": "={{ 'pc:' + $json.pc + ':no' }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2448,
+        384
+      ],
+      "id": "6d99d4a5-1ff4-451d-b1b1-b823acc3c3e9",
+      "name": "Enviar con botones",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "webhookId": "f1d9e960-820e-46a9-84ac-fec0bb8824c9",
+      "credentials": {
+        "telegramApi": {
+          "id": "p2lXYE6uXM1K7clR",
+          "name": "Telegram Finanzas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "7739445962",
+        "text": "={{ String($json.texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2448,
+        624
+      ],
+      "id": "72289b25-74fc-4168-9bc4-ba649cbfd089",
+      "name": "Enviar aviso",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "webhookId": "6c52e752-c2ad-45fd-bbb5-fcd3bff6a38f",
+      "credentials": {
+        "telegramApi": {
+          "id": "p2lXYE6uXM1K7clR",
+          "name": "Telegram Finanzas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM?fields=sheets.properties(sheetId,title)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -4512,
+        1072
+      ],
+      "id": "52d924ad-265c-4a79-a4fd-e7c5526025f1",
+      "name": "Metadatos",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tz = 'America/Bogota';\nconst ahora = DateTime.now().setZone(tz);\nconst sello = ahora.toFormat('yyMMddHHmmss') + '-' + $execution.id;   // único aunque lleguen varias fotos en el mismo segundo\n// Montos: acepta 25000, \"25.000\", \"$ 25.000,50\", \"(3.797.362)\"\nconst num = v => {\n  if (typeof v === 'number') return v;\n  let s = String(v ?? '').trim();\n  if (!s || s === '-') return 0;\n  const neg = /^\\(.*\\)$/.test(s) || s.startsWith('-');\n  s = s.replace(/[^\\d,.]/g, '');\n  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');\n  else if ((s.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s);\n  return isNaN(n) ? 0 : (neg ? -n : n);\n};\n// Fechas: acepta 2026-09-29, 29/09/2026, con hora, o número de serie de Sheets\nconst fecha = v => {\n  if (typeof v === 'number') return DateTime.fromISO('1899-12-30', { zone: tz }).plus({ days: Math.floor(v) });\n  const s = String(v || '').trim();\n  for (const f of ['yyyy-MM-dd', 'd/M/yyyy', 'd/M/yy', 'yyyy-MM-dd H:mm', 'yyyy-MM-dd H:mm:ss', 'd/M/yyyy H:mm', 'd/M/yyyy H:mm:ss']) {\n    const d = DateTime.fromFormat(s, f, { zone: tz });\n    if (d.isValid) return d;\n  }\n  return DateTime.fromISO(s, { zone: tz });\n};\nconst pesos = n => (n < 0 ? '-$' : '$') + String(Math.abs(Math.round(n))).replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\n\nconst T = $('Tablas').first().json;\nconst norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\nconst movs = (T['Movimientos'] || []).filter(r => r.ID).map(r => ({ ...r, _fecha: fecha(r.Fecha), _monto: num(r.Monto) }));\nconst ENTRA = ['Ingreso', 'Préstamo recibido', 'Abono recibido', 'Cobro cuota', 'Ajuste', 'Venta reventa'];\nconst SALE = ['Gasto', 'Préstamo dado', 'Abono pagado', 'Transferencia', 'Pago tarjeta', 'Compra reventa'];\nconst DEST = ['Transferencia', 'Pago tarjeta'];\nconst cuentas = (T['Cuentas'] || []).filter(c => c.ID).map(c => {\n  const ancla = fecha(c['Fecha saldo inicial']);\n  const desde = ancla.isValid ? ancla.startOf('day') : DateTime.fromISO('1900-01-01');\n  const mv = movs.filter(r => r._fecha.isValid && r._fecha >= desde);\n  const sum = (campo, tipos) => mv.filter(r => String(r[campo]) === String(c.ID) && tipos.includes(r.Tipo)).reduce((s, r) => s + r._monto, 0);\n  const ent = sum('Cuenta', ENTRA), sal = sum('Cuenta', SALE), dst = sum('Cuenta destino', DEST);\n  const si = num(c['Saldo inicial']), tasa = num(c['Tasa EA']);\n  let saldo;\n  if (c.Tipo === 'Inversión') saldo = null;\n  else if (c.Tipo === 'Tarjeta de crédito') saldo = si - ent + sal - dst;\n  else if (c.Tipo === 'CDT') { const fin = fecha(c['Fecha vencimiento']), hasta = fin.isValid && fin < ahora ? fin : ahora;\n    saldo = si * Math.pow(1 + tasa, Math.max(0, hasta.diff(desde, 'days').days) / 365) + ent - sal + dst; }\n  else saldo = si + ent - sal + dst;\n  return { ID: c.ID, Nombre: c.Nombre, Entidad: c.Entidad, Tipo: c.Tipo, Padre: c['Cuenta padre'] || '', Alias: String(c.Alias || ''),\n    Activa: String(c.Activa || 'Sí') !== 'No', cobra4x1000: String(c['Cobra 4x1000']) === 'Sí', Cupo: num(c.Cupo), tasa,\n    corte: num(c['Día de corte']), pago: num(c['Día de pago']), saldo, ancla: desde.toFormat('yyyy-MM-dd'), vence: c['Fecha vencimiento'] || '', row_number: c.row_number };\n});\nconst cta = id => cuentas.find(c => c.ID === id) || {};\nconst nombreDe = id => cta(id).Nombre || id;\n// Tarjetas: próximo pago, mínimo (cuotas que vencen hasta esa fecha) y total (toda la deuda)\nconst ctasT = (T['Cuotas tarjeta'] || []).filter(r => r.ID);\nconst tarjetas = cuentas.filter(c => c.Tipo === 'Tarjeta de crédito' && c.Activa).map(c => {\n  const dia = c.pago || 10;\n  let prox = ahora.set({ day: Math.min(dia, ahora.daysInMonth) }).startOf('day');\n  if (prox < ahora.startOf('day')) { const m = ahora.plus({ months: 1 }); prox = m.set({ day: Math.min(dia, m.daysInMonth) }).startOf('day'); }\n  const pend = ctasT.filter(r => r.Cuenta === c.ID && !['Pagada', 'Anulada'].includes(r.Estado));\n  const minimo = pend.filter(r => fecha(r['Fecha de pago']) <= prox.endOf('day')).reduce((s, r) => s + num(r['Valor cuota']), 0);\n  return { ID: c.ID, Nombre: c.Nombre, deuda: c.saldo, cupo: c.Cupo, prox: prox.toFormat('yyyy-MM-dd'), minimo, total: c.saldo };\n});\n// Personas y deudas: informal (préstamos dados sin préstamo formal − abonos) + cuotas pendientes de préstamos\nconst personas = (T['Personas'] || []).filter(p => p.Nombre);\nconst prestamos = (T['Préstamos'] || []).filter(p => p.ID);\nconst cuotasP = (T['Cuotas préstamo'] || []).filter(q => q['ID préstamo']);\nconst nombresPersona = [...new Set([...personas.map(p => p.Nombre), ...movs.map(r => r.Persona).filter(Boolean), ...prestamos.map(p => p.Persona)])];\nconst deudas = nombresPersona.map(nombre => {\n  const deP = movs.filter(r => norm(r.Persona) === norm(nombre));\n  const informal = deP.filter(r => r.Tipo === 'Préstamo dado' && !String(r.Referencia || '').startsWith('PR-')).reduce((s, r) => s + r._monto, 0)\n    - deP.filter(r => r.Tipo === 'Abono recibido').reduce((s, r) => s + r._monto, 0);\n  const cuotas = cuotasP.filter(q => norm(q.Persona) === norm(nombre) && !['Pagada', 'Anulada'].includes(q.Estado)).reduce((s, q) => s + num(q['Valor cuota']) - num(q['Valor recibido']), 0);\n  const yoDebo = deP.filter(r => r.Tipo === 'Préstamo recibido').reduce((s, r) => s + r._monto, 0) - deP.filter(r => r.Tipo === 'Abono pagado').reduce((s, r) => s + r._monto, 0);\n  const p = personas.find(x => norm(x.Nombre) === norm(nombre)) || {};\n  return { nombre, alias: String(p.Alias || ''), relacion: p['Relación'] || '', informal, cuotas, total: informal + cuotas, yoDebo, row_number: p.row_number || null };\n});\n// Inversiones: cantidad, costo (promedio), valor actual y ganancia por activo\nconst Pm = k => ((T['Parámetros'] || []).find(r => r.Clave === k) || {}).Valor;\nconst usdcop = num(Pm('usdcop_manual')) || 4000;\nconst activos = (T['Activos'] || []).filter(a => a.Activo).map(a => ({ simbolo: String(a.Activo), nombre: a.Nombre || a.Activo, tipo: a['Tipo activo'] || 'Cripto', cuenta: a.Cuenta || '',\n  precio: num(a['Precio manual USD']), fechaPrecio: a['Fecha precio manual'] || '', vigente: String(a['Activo vigente'] || 'Sí') !== 'No', notas: String(a.Notas || ''), row_number: a.row_number }));\nconst opsInv = (T['Operaciones inversión'] || []).filter(o => o.ID);\nconst portafolio = activos.map(a => {\n  const os = opsInv.filter(o => String(o.Activo).toUpperCase() === a.simbolo.toUpperCase()).sort((x, y) => fecha(x.Fecha) - fecha(y.Fecha));\n  let cantidad = 0, costo = 0, realizado = 0;\n  for (const o of os) {\n    const q = num(o.Cantidad), t = o['Tipo operación'], tcop = num(o['Total COP']);\n    if (t === 'Saldo inicial' || t === 'Compra') { cantidad += q; costo += tcop || num(o['Total USD']) * usdcop; }\n    else if (t === 'Venta') { const cu = cantidad ? costo / cantidad : 0; realizado += tcop - cu * q; costo -= cu * q; cantidad -= q; }\n    else if (t === 'Ajuste' || t === 'Recompensa') cantidad += q;\n  }\n  const valor = cantidad * a.precio * usdcop;\n  return { ...a, cantidad, costo, valor, ganancia: valor - costo, realizado };\n});\nconst valorInversion = id => portafolio.filter(p => p.cuenta === id).reduce((s, p) => s + p.valor, 0);\n// Reventas: inventario y ganancia\nconst reventas = (T['Reventas'] || []).filter(r => r.ID).map(r => {\n  const c = num(r.Cantidad), v = num(r['Cantidad vendida']), u = num(r['Cantidad uso propio']), costo = num(r['Costo total']), unit = c ? costo / c : 0;\n  return { ID: r.ID, articulo: r['Artículo'], cantidad: c, vendidas: v, uso: u, quedan: c - v - u, costo, unit, vendido: num(r['Total vendido']),\n    ganancia: num(r['Total vendido']) - unit * v, estado: r.Estado, fecha: r['Fecha compra'], row_number: r.row_number };\n});\n// Presupuestos, metas y fondo de emergencia\nconst mesAct = ahora.toFormat('yyyy-MM');\nconst mesDe = v => {\n  if (v === '' || v === null || v === undefined) return '';\n  if (typeof v === 'number') return fecha(v).toFormat('yyyy-MM');\n  const s = String(v).trim(); const m = s.match(/^(\\d{4})-(\\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2, '0')}`;\n  const f = fecha(s); if (f.isValid) return f.toFormat('yyyy-MM');\n  const m2 = s.match(/(\\d{1,2})\\/(\\d{4})$/); return m2 ? `${m2[2]}-${m2[1].padStart(2, '0')}` : '';\n};\nconst presupuestos = (T['Presupuestos'] || []).filter(p => p['Categoría']).map(p => ({ mes: mesDe(p.Mes), categoria: p['Categoría'], monto: num(p.Monto), row_number: p.row_number }));\nconst gastoCat = mes => { const o = {}; for (const r of movs) if (r.Tipo === 'Gasto' && r._fecha.isValid && r._fecha.toFormat('yyyy-MM') === mes) { const c = r['Categoría'] || 'Sin categoría'; o[c] = (o[c] || 0) + r._monto; } return o; };\nconst estadoPres = mes => { const g = gastoCat(mes); return presupuestos.filter(p => p.mes === mes).map(p => ({ ...p, gastado: g[p.categoria] || 0, pct: p.monto ? (g[p.categoria] || 0) / p.monto : 0 })); };\nconst gastoMes = mes => Object.values(gastoCat(mes)).reduce((s, v) => s + v, 0);\nconst mesesAtras = [1, 2, 3].map(i => ahora.minus({ months: i }).toFormat('yyyy-MM')).filter(m => gastoMes(m) > 0);\nconst gastoPromedio = mesesAtras.length ? mesesAtras.reduce((s, m) => s + gastoMes(m), 0) / mesesAtras.length : gastoMes(mesAct);\nconst disponible = cuentas.filter(c => c.Activa && !['Tarjeta de crédito', 'Inversión', 'CDT'].includes(c.Tipo) && c.saldo != null).reduce((s, c) => s + c.saldo, 0);\nconst metas = (T['Metas'] || []).filter(m => m.ID).map(m => ({ ID: m.ID, nombre: m.Nombre, cuenta: m.Cuenta, objetivo: num(m['Monto objetivo']), fin: m['Fecha objetivo'], estado: m.Estado || 'Activa', row_number: m.row_number }));\nconst avanceMeta = m => { const c = cuentas.find(x => x.ID === m.cuenta) || {}; const tiene = Math.max(0, c.saldo || 0); const f = fecha(m.fin);\n  const mesesF = f.isValid ? Math.max(1, Math.ceil(f.diff(ahora, 'months').months)) : null;\n  return { ...m, tiene, pct: m.objetivo ? tiene / m.objetivo : 0, falta: Math.max(0, m.objetivo - tiene), porMes: mesesF ? Math.max(0, m.objetivo - tiene) / mesesF : null, cuentaNombre: c.Nombre || m.cuenta }; };\nconst resumenPrestamos = prestamos.map(p => {\n  const qs = cuotasP.filter(q => q['ID préstamo'] === p.ID).sort((a, b) => num(a['Nº']) - num(b['Nº']));\n  const pend = qs.filter(q => !['Pagada', 'Anulada'].includes(q.Estado));\n  return { ID: p.ID, persona: p.Persona, monto: num(p['Monto prestado']), n: num(p['Nº cuotas']), valor: num(p['Valor cuota']), frecuencia: p.Frecuencia,\n    cuenta_cobro: p['Cuenta de cobro habitual'] || '', pagadas: qs.length - pend.length, pendientes: pend.length,\n    saldo: pend.reduce((s, q) => s + num(q['Valor cuota']) - num(q['Valor recibido']), 0),\n    proxima: pend[0] ? { n: num(pend[0]['Nº']), fecha: pend[0].Fecha, valor: num(pend[0]['Valor cuota']) - num(pend[0]['Valor recibido']) } : null };\n});\n\n// Resumen semanal (domingo) y mensual (día 1): mensaje, gráficas, Historial, copia del presupuesto y limpieza\nconst manual = ['manual', 'test'].includes($execution.mode);   // al ejecutarlo a mano sale el resumen semanal (para probar)\nconst semanal = manual || (ahora.weekday === 7 && ahora.hour >= 18), mensual = ahora.day === 1 && ahora.hour < 12;\nconst ops = [], borrar = [], graficas = []; let texto = '';\nconst P = k => ((T['Parámetros'] || []).find(r => r.Clave === k) || {}).Valor;\nconst inicioSem = ahora.startOf('day').minus({ days: 6 }), finSem = ahora.endOf('day');\nconst enRango = (r, a, b) => r._fecha.isValid && r._fecha >= a && r._fecha <= b;\nconst gastos = (a, b) => movs.filter(r => r.Tipo === 'Gasto' && enRango(r, a, b));\nconst porCat = lista => { const o = {}; for (const r of lista) { const c = r['Categoría'] || 'Sin categoría'; o[c] = (o[c] || 0) + r._monto; } return Object.entries(o).sort((x, y) => y[1] - x[1]); };\nconst inv = portafolio.reduce((s, p) => s + p.valor, 0);\nconst deudaT = tarjetas.reduce((s, t) => s + (t.deuda || 0), 0);\nconst futuras = ctasT.filter(q => !['Pagada', 'Anulada'].includes(q.Estado)).reduce((s, q) => s + num(q['Valor cuota']), 0);\nconst meDeben = deudas.reduce((s, d) => s + Math.max(0, d.total), 0), yoDebo = deudas.reduce((s, d) => s + Math.max(0, d.yoDebo), 0);\nconst patrimonio = disponible + inv + meDeben - deudaT - yoDebo;\nconst colores = ['#6C5CE7', '#00B894', '#FDCB6E', '#E17055', '#0984E3', '#E84393', '#00CEC9', '#B2BEC3'];\n// Gráficas (Chart.js 4 en QuickChart): se arman como texto para poder incluir funciones de formato\nconst F = {\n  pesos: \"function(v){v=Number(v);var a=Math.abs(v);var s=a>=1e6?(a/1e6).toFixed(1).replace('.',',')+' M':a>=1e3?Math.round(a/1e3)+' mil':Math.round(a);return (v<0?'-$':'$')+s}\",\n  pctDona: \"function(v,ctx){var t=ctx.dataset.data.reduce(function(a,b){return a+b},0);var p=Math.round(v*100/t);return p>=6?p+'%':''}\",\n  pctBarra: \"function(v,ctx){if(ctx.datasetIndex!==1)return '';var p=ctx.chart.data.datasets[0].data[ctx.dataIndex];return p?Math.round(v*100/p)+'%':'sin presupuesto'}\",\n  ultimo: \"function(ctx){return ctx.dataIndex===ctx.dataset.data.length-1}\"\n};\nconst chartJs = obj => JSON.stringify(obj).replace(/\"__(pesos|pctDona|pctBarra|ultimo)__\"/g, (_, k) => F[k]);\nconst corto = v => { const a = Math.abs(v); return (v < 0 ? '-$' : '$') + (a >= 1e6 ? (a / 1e6).toFixed(1).replace('.', ',') + ' M' : a >= 1e3 ? Math.round(a / 1e3) + ' mil' : Math.round(a)); };\nconst titulo = (t, sub) => ({ display: true, text: t, color: '#2D3436', font: { size: 24, weight: 'bold' }, padding: { top: 6, bottom: sub ? 2 : 18 } });\nconst subtitulo = t => ({ display: !!t, text: t, color: '#636E72', font: { size: 16 }, padding: { bottom: 18 } });\nconst leyenda = pos => ({ position: pos, labels: { color: '#2D3436', font: { size: 15 }, boxWidth: 16, boxHeight: 16, usePointStyle: true, pointStyle: 'rectRounded', padding: 16 } });\n\n// v6: foto detallada del resumen semanal: saldo por cuenta, inversiones, quién te debe y qué debes\nconst fotoSemana = () => {\n  const act = cuentas.filter(c => c.Activa && c.saldo != null && !['Tarjeta de crédito', 'Inversión'].includes(c.Tipo));\n  const raiz = act.filter(c => !c.Padre || !act.some(p => p.ID === c.Padre));\n  const lc = [];\n  for (const c of raiz) {\n    const hijos = act.filter(h => h.Padre === c.ID && Math.round(h.saldo) !== 0);\n    if (Math.round(c.saldo) === 0 && !hijos.length) continue;\n    lc.push(`• ${c.Nombre}: ${pesos(c.saldo)}${c.Tipo === 'CDT' ? ' (CDT, no disponible)' : ''}`);\n    for (const h of hijos) lc.push(`   ↳ ${h.Nombre}: ${pesos(h.saldo)}${h.Tipo === 'CDT' ? ' (CDT)' : ''}`);\n  }\n  const li = portafolio.filter(p => p.vigente !== false && p.cantidad > 1e-9 && Math.round(p.valor) > 0).sort((x, y) => y.valor - x.valor)\n    .map(p => `• ${p.simbolo}: ${pesos(p.valor)}${p.costo > 0 && Math.round(p.ganancia) !== 0 ? ` (${p.ganancia >= 0 ? '+' : '-'}${pesos(Math.abs(p.ganancia))}, ${p.ganancia >= 0 ? '+' : '-'}${String(Math.abs(Math.round(p.ganancia * 1000 / p.costo) / 10)).replace('.', ',')}%)` : ''}`);\n  const deben = deudas.filter(x => x.total > 0).sort((x, y) => y.total - x.total);\n  const ld = deben.slice(0, 8).map(x => `• ${x.nombre}: ${pesos(x.total)}${x.cuotas > 0 && x.informal > 0 ? ` (${pesos(x.informal)} sueltos + ${pesos(x.cuotas)} en cuotas)` : x.cuotas > 0 ? ' (en cuotas)' : ''}`);\n  if (deben.length > 8) ld.push(`• y ${deben.length - 8} más (${pesos(deben.slice(8).reduce((s, x) => s + x.total, 0))})`);\n  const ldb = [...tarjetas.filter(t => Math.round(t.total) > 0).map(t => `• ${t.Nombre}: ${pesos(t.total)} · paga el ${fecha(t.prox).setLocale('es').toFormat('d LLL')} (mínimo ≈ ${pesos(t.minimo)})`),\n    ...deudas.filter(x => x.yoDebo > 0).sort((x, y) => y.yoDebo - x.yoDebo).map(x => `• ${x.nombre}: ${pesos(x.yoDebo)}`)];\n  return `\\n🏦 Tus saldos (disponible ${pesos(disponible)})\\n${lc.join('\\n') || '• (sin saldos)'}\\n` +\n    `\\n📈 Inversiones ${pesos(inv)}\\n${li.join('\\n') || '• (ninguna)'}\\n` +\n    `\\n🤝 Te deben ${pesos(meDeben)}\\n${ld.join('\\n') || '• Nadie 🙌'}\\n` +\n    `\\n💳 Tú debes ${pesos(deudaT + yoDebo)}\\n${ldb.join('\\n') || '• Nada 🙌'}\\n\\n`;\n};\nif (semanal) {\n  const gs = gastos(inicioSem, finSem), gsAnt = gastos(inicioSem.minus({ days: 7 }), inicioSem.minus({ milliseconds: 1 }));\n  const tot = gs.reduce((s, r) => s + r._monto, 0), totAnt = gsAnt.reduce((s, r) => s + r._monto, 0);\n  const ing = movs.filter(r => ['Ingreso', 'Venta reventa', 'Cobro cuota'].includes(r.Tipo) && enRango(r, inicioSem, finSem)).reduce((s, r) => s + r._monto, 0);\n  const rend = movs.filter(r => r.Tipo === 'Ingreso' && r['Categoría'] === 'Rendimientos' && enRango(r, inicioSem, finSem)).reduce((s, r) => s + r._monto, 0);\n  const cats = porCat(gs), top = gs.slice().sort((x, y) => y._monto - x._monto).slice(0, 3);\n  const ep = estadoPres(mesAct);\n  const hoyH = ahora.toFormat('yyyy-MM-dd');\n  const histPrev = (T['Historial'] || []).filter(h => h.Fecha && fecha(h.Fecha).isValid && fecha(h.Fecha).toFormat('yyyy-MM-dd') < hoyH);\n  const hist = histPrev.slice(-1)[0];\n  const cambioPat = hist ? patrimonio - num(hist['Patrimonio neto']) : null;\n  texto = `📅 Tu semana (${inicioSem.setLocale('es').toFormat('d LLL')} – ${ahora.setLocale('es').toFormat('d LLL')})\\n\\n` +\n    `💸 Gastaste ${pesos(tot)}` + (totAnt ? ` (${tot > totAnt ? '▲' : '▼'} ${Math.abs(Math.round((tot - totAnt) * 100 / totAnt))}% vs. la semana pasada)` : '') + '\\n' +\n    (cats.length ? cats.slice(0, 5).map(([c, v]) => `• ${c}: ${pesos(v)}`).join('\\n') + '\\n' : '') +\n    (top.length ? `Lo más grande: ${top.map(r => `${r.Detalle || r.Comercio} (${pesos(r._monto)})`).join(', ')}\\n` : '') +\n    (ing ? `💰 Entraron ${pesos(ing)}${rend ? ` (${pesos(rend)} de rendimientos)` : ''}\\n` : '') +\n    (ep.length ? `\\n📊 Presupuesto del mes: ${ep.filter(p => p.pct >= 1).length ? '🚨 ' + ep.filter(p => p.pct >= 1).map(p => p.categoria).join(', ') + ' pasado(s). ' : ''}${ep.filter(p => p.pct >= 0.8 && p.pct < 1).length ? '⚠️ Cerca: ' + ep.filter(p => p.pct >= 0.8 && p.pct < 1).map(p => `${p.categoria} ${Math.round(p.pct * 100)}%`).join(', ') + '. ' : ''}Total ${pesos(ep.reduce((s, p) => s + p.gastado, 0))} de ${pesos(ep.reduce((s, p) => s + p.monto, 0))}.\\n` : '') +\n    fotoSemana() +\n    `🧮 Patrimonio neto ${pesos(patrimonio)}` + (cambioPat !== null ? ` (${cambioPat >= 0 ? '+' : '-'}${pesos(Math.abs(cambioPat))} en la semana)` : '');\n  // Foto semanal para el historial\n  const filaH = { Fecha: hoyH, 'Efectivo y cuentas': Math.round(disponible), 'Inversiones COP': Math.round(inv), 'Deuda tarjetas': Math.round(deudaT),\n    'Cuotas tarjeta futuras': Math.round(futuras), 'Me deben': Math.round(meDeben), 'Yo debo': Math.round(yoDebo), 'Patrimonio neto': Math.round(patrimonio),\n    'Gasto de la semana': Math.round(tot), 'Gasto del mes': Math.round(gastoMes(mesAct)), 'Rendimientos de la semana': Math.round(rend) };\n  // Una sola foto por día: si ya existe la de hoy (por ejecutarlo varias veces), se actualiza\n  const yaHoy = (T['Historial'] || []).find(h => h.Fecha && fecha(h.Fecha).isValid && fecha(h.Fecha).toFormat('yyyy-MM-dd') === hoyH);\n  if (yaHoy) ops.push({ tabla: 'Historial', tipo: 'update', row: yaHoy.row_number, cambios: filaH }); else ops.push({ tabla: 'Historial', tipo: 'append', fila: filaH });\n  // Gráficas\n  if (cats.length) {\n    const top = cats.slice(0, 7), resto = cats.slice(7).reduce((s, c) => s + c[1], 0);\n    if (resto) top.push(['Otras', resto]);\n    graficas.push({ titulo: 'En qué gastaste esta semana', ancho: 1000, alto: 560, chart: chartJs({ type: 'doughnut',\n      data: { labels: top.map(c => `${c[0]}  ${corto(c[1])}`), datasets: [{ data: top.map(c => Math.round(c[1])), backgroundColor: colores, borderColor: '#FFFFFF', borderWidth: 4, hoverOffset: 0 }] },\n      options: { cutout: '58%', layout: { padding: 16 }, plugins: { title: titulo('¿En qué gastaste esta semana?', true), subtitle: subtitulo(`Total: ${pesos(tot)}`), legend: leyenda('right'),\n        datalabels: { color: '#FFFFFF', font: { size: 16, weight: 'bold' }, formatter: '__pctDona__' } } } }) });\n  }\n  if (ep.length) {\n    const orden = ep.slice().sort((x, y) => y.pct - x.pct);\n    graficas.push({ titulo: 'Presupuesto del mes', ancho: 1000, alto: Math.max(360, 150 + orden.length * 70), chart: chartJs({ type: 'bar',\n      data: { labels: orden.map(p => `${p.categoria} · ${Math.round(p.pct * 100)}%`), datasets: [\n        { label: 'Presupuesto', data: orden.map(p => Math.round(p.monto)), backgroundColor: '#E9EDF0', borderRadius: 8, borderSkipped: false, barPercentage: 0.95, categoryPercentage: 0.75 },\n        { label: 'Gastado', data: orden.map(p => Math.round(p.gastado)), backgroundColor: orden.map(p => p.pct >= 1 ? '#E74C3C' : p.pct >= 0.8 ? '#F5B041' : '#27AE60'), borderRadius: 8, borderSkipped: false, barPercentage: 0.95, categoryPercentage: 0.75 }] },\n      options: { indexAxis: 'y', layout: { padding: { right: 30, left: 8 } },\n        plugins: { title: titulo(`Presupuesto de ${ahora.setLocale('es').toFormat('LLLL')}`, true), subtitle: subtitulo(`Llevas ${pesos(orden.reduce((s, p) => s + p.gastado, 0))} de ${pesos(orden.reduce((s, p) => s + p.monto, 0))}`), legend: leyenda('bottom'),\n          datalabels: { display: false } },\n        scales: { x: { beginAtZero: true, grid: { color: '#F0F0F0' }, border: { display: false }, ticks: { color: '#636E72', font: { size: 13 }, callback: '__pesos__' } },\n          y: { grid: { display: false }, border: { display: false }, ticks: { color: '#2D3436', font: { size: 16, weight: 'bold' } } } } } }) });\n  }\n  const serie = [...histPrev.slice(-11).map(h => ({ f: fecha(h.Fecha), pat: num(h['Patrimonio neto']), deuda: num(h['Deuda tarjetas']) })), { f: ahora, pat: patrimonio, deuda: deudaT }];\n  if (serie.length >= 2) graficas.push({ titulo: 'Evolución', ancho: 1000, alto: 560, chart: chartJs({ type: 'line',\n    data: { labels: serie.map(x => x.f.setLocale('es').toFormat('d LLL')), datasets: [\n      { label: 'Patrimonio neto', data: serie.map(x => Math.round(x.pat)), borderColor: '#6C5CE7', backgroundColor: 'rgba(108,92,231,0.12)', fill: true, tension: 0.35, borderWidth: 4, pointRadius: 5, pointBackgroundColor: '#6C5CE7' },\n      { label: 'Deuda de la tarjeta', data: serie.map(x => Math.round(x.deuda)), borderColor: '#E74C3C', borderDash: [8, 6], fill: false, tension: 0.35, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#E74C3C' }] },\n    options: { layout: { padding: { right: 40, top: 10 } }, plugins: { title: titulo('Patrimonio y deuda', true), subtitle: subtitulo('Semana a semana'), legend: leyenda('bottom'),\n        datalabels: { display: '__ultimo__', align: 'top', offset: 8, color: '#2D3436', font: { size: 15, weight: 'bold' }, formatter: '__pesos__' } },\n      scales: { x: { grid: { display: false }, ticks: { color: '#636E72', font: { size: 14 } } }, y: { grid: { color: '#F0F0F0' }, border: { display: false }, ticks: { color: '#636E72', font: { size: 13 }, callback: '__pesos__' } } } } }) });\n}\n\nif (mensual) {\n  const mAnt = ahora.minus({ months: 1 }), kAnt = mAnt.toFormat('yyyy-MM');\n  const gm = gastos(mAnt.startOf('month'), mAnt.endOf('month')), tot = gm.reduce((s, r) => s + r._monto, 0);\n  const ing = movs.filter(r => ['Ingreso', 'Venta reventa'].includes(r.Tipo) && enRango(r, mAnt.startOf('month'), mAnt.endOf('month'))).reduce((s, r) => s + r._monto, 0);\n  const ep = estadoPres(kAnt);\n  texto += (texto ? '\\n\\n' : '') + `🗓️ Resumen de ${mAnt.setLocale('es').toFormat('LLLL')}\\n💸 Gastos: ${pesos(tot)} · 💰 Ingresos: ${pesos(ing)}\\n` +\n    porCat(gm).slice(0, 6).map(([c, v]) => { const p = ep.find(x => x.categoria === c); return `• ${c}: ${pesos(v)}${p ? ` de ${pesos(p.monto)} ${v > p.monto ? '🚨' : '✅'}` : ''}`; }).join('\\n');\n  // Copia el presupuesto al mes nuevo si no existe\n  const yaHay = presupuestos.some(p => p.mes === mesAct), anterior = presupuestos.filter(p => p.mes === kAnt);\n  if (!yaHay && anterior.length) {\n    for (const p of anterior) ops.push({ tabla: 'Presupuestos', tipo: 'append', fila: { Mes: mesAct, 'Categoría': p.categoria, Monto: p.monto, Notas: 'Copiado del mes anterior', Creado: ahora.toFormat('yyyy-MM-dd HH:mm'), Modificado: ahora.toFormat('yyyy-MM-dd HH:mm') } });\n    texto += `\\n\\n📋 Copié tu presupuesto de ${mAnt.setLocale('es').toFormat('LLLL')} a ${ahora.setLocale('es').toFormat('LLLL')} (${pesos(anterior.reduce((s, p) => s + p.monto, 0))}). Si quieres cambiar algo, dime por ejemplo \"pon 350 mil para comida\".`;\n  }\n}\n\n// Limpieza: Log Bot de más de 90 días (las filas más viejas están arriba) y confirmaciones cerradas de más de 30 días\nif (semanal) {\n  const meta = ($('Metadatos').first().json.sheets || []).map(x => x.properties);\n  const gid = t => (meta.find(x => x.title === t) || {}).sheetId;\n  const log = T['Log Bot'] || []; let k = 0;\n  while (k < log.length && fecha(log[k].FechaHora).isValid && fecha(log[k].FechaHora) < ahora.minus({ days: 90 }) && log[k].row_number === k + 2) k++;\n  if (k && gid('Log Bot') !== undefined) borrar.push({ deleteDimension: { range: { sheetId: gid('Log Bot'), dimension: 'ROWS', startIndex: 1, endIndex: 1 + k } } });\n  const viejas = (T['Por confirmar'] || []).filter(x => x.Estado !== 'Pendiente' && fecha(x.Creado).isValid && fecha(x.Creado) < ahora.minus({ days: 30 })).map(x => x.row_number).sort((a, b) => b - a);\n  if (gid('Por confirmar') !== undefined) for (const rn of viejas) borrar.push({ deleteDimension: { range: { sheetId: gid('Por confirmar'), dimension: 'ROWS', startIndex: rn - 1, endIndex: rn } } });\n  if (k || viejas.length) texto += `\\n\\n🧹 Limpieza: ${k} registros viejos del Log Bot y ${viejas.length} confirmaciones cerradas.`;\n}\nreturn [{ json: { ops, borrar, graficas, mensaje: texto || '', semanal } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4288,
+        1072
+      ],
+      "id": "f030fd1b-15fe-4dfc-9112-467a7f6618f2",
+      "name": "Reporte"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1340bdec-5fda-44c4-8c8f-8d8418dd4864",
+              "leftValue": "={{ $('Reporte').first().json.semanal }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4064,
+        1072
+      ],
+      "id": "3fe35a02-01f9-4fbd-a9f5-7f239c5b8faa",
+      "name": "¿Semanal?"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM",
+          "mode": "id"
+        },
+        "name": "=Respaldo FinanzasWilliam {{ $now.setZone('America/Bogota').toFormat('yyyy-MM-dd') }}",
+        "sameFolder": false,
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1rVklbnardQaA2fHmLbGIglye4hrVwmyw",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3824,
+        960
+      ],
+      "id": "ecefb1bf-2c8b-4fc5-8497-85dbae1a89ab",
+      "name": "Copiar hoja",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4pZ4lEzqR7nzLJsq",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1rVklbnardQaA2fHmLbGIglye4hrVwmyw",
+            "mode": "id"
+          },
+          "whatToSearch": "files"
+        },
+        "options": {
+          "fields": [
+            "id",
+            "name"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3600,
+        960
+      ],
+      "id": "dc634d7b-24f3-4a82-8952-0ecff4242dcb",
+      "name": "Buscar respaldos",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4pZ4lEzqR7nzLJsq",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deja solo los 8 respaldos más recientes\nconst archivos = $input.all().map(i => i.json).filter(f => f.id && /^Respaldo FinanzasWilliam/.test(f.name || ''));\narchivos.sort((a, b) => String(b.name).localeCompare(String(a.name)));\nconst viejos = archivos.slice(8);\nreturn viejos.length ? viejos.map(f => ({ json: { id: f.id, name: f.name } })) : [{ json: { vacio: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3360,
+        960
+      ],
+      "id": "db6a627c-09e8-407b-989f-20ea0b8d08e0",
+      "name": "Respaldos viejos"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "028829e9-cf16-41c7-afeb-6c1bb03b96bc",
+              "leftValue": "={{ !$json.vacio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3136,
+        960
+      ],
+      "id": "707d38c8-6cee-46e0-978e-e6894f55be53",
+      "name": "¿Hay viejos?"
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2912,
+        864
+      ],
+      "id": "d65b98b8-10d5-440a-beb0-e991ca5e84ca",
+      "name": "Borrar respaldo viejo",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4pZ4lEzqR7nzLJsq",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convierte las filas en pedidos a la API de Google Sheets: un \"append\" por pestaña y un \"batchUpdate\" para las ediciones\nconst T = $('Tablas').first().json;\nconst ops = $('Reporte').first().json.ops || [];\nconst H = T._h || {};\nconst base = 'https://sheets.googleapis.com/v4/spreadsheets/1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM';\nconst col = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };\nconst COL_FECHA = /^(Fecha|Creado|Modificado|Expira|Actualizado|Hora|Mes)/i;\nconst limpio = (v, col) => (typeof v === 'string' && (/^[=+@]/.test(v) || (!COL_FECHA.test(col || '') && /^\\d{1,2}[\\/:-]\\d{1,2}([\\/-]\\d{2,4})?$/.test(v.trim())))) ? \"'\" + v : (v === undefined || v === null ? '' : v);\nconst items = [], porTabla = {};\nfor (const o of ops.filter(o => o.tipo === 'append' && (H[o.tabla] || []).length)) (porTabla[o.tabla] = porTabla[o.tabla] || []).push(H[o.tabla].map(h => limpio(o.fila[h], h)));\nfor (const [t, filas] of Object.entries(porTabla))\n  items.push({ json: { url: `${base}/values/${encodeURIComponent(\"'\" + t + \"'!A1\")}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, body: { values: filas } } });\nconst data = [];\nfor (const o of ops.filter(o => o.tipo === 'update'))\n  for (const [c, v] of Object.entries(o.cambios)) { const i = (H[o.tabla] || []).indexOf(c); if (i >= 0) data.push({ range: `'${o.tabla}'!${col(i)}${o.row}`, values: [[limpio(v, c)]] }); }\nif (data.length) items.push({ json: { url: `${base}/values:batchUpdate`, body: { valueInputOption: 'USER_ENTERED', data } } });\nconst borrar = $('Reporte').first().json.borrar || [];\nif (borrar.length) items.push({ json: { url: `${base}:batchUpdate`, body: { requests: borrar } } });\nreturn items.length ? items : [{ json: { vacio: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2672,
+        1072
+      ],
+      "id": "1c6a9985-ceb3-4847-80fb-e639f775f56a",
+      "name": "Solicitudes R",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9b98e1ff-4689-4fc2-b13e-f78af4e60c4d",
+              "leftValue": "={{ !$json.vacio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2448,
+        1072
+      ],
+      "id": "41d980aa-0496-4d70-9978-25ad6f8b7571",
+      "name": "¿Hay cambios?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 200
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -2224,
+        960
+      ],
+      "id": "7117e4c5-c280-4695-8ffa-28686a1aafa1",
+      "name": "Escribir hoja R",
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 10000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a29ee7da-bbe1-438c-80a5-4e65b13881db",
+              "leftValue": "={{ !!$('Reporte').first().json.mensaje }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1984,
+        1072
+      ],
+      "id": "689a145b-6c46-43f8-8336-0fbd938c91b8",
+      "name": "¿Hay mensaje?",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "chatId": "7739445962",
+        "text": "={{ String($('Reporte').first().json.mensaje || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1760,
+        1072
+      ],
+      "id": "b8f6889f-e55d-4a95-ade1-3ff60028f1c5",
+      "name": "Enviar resumen",
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "webhookId": "889a8015-7cae-4247-8459-77038b4c5788",
+      "credentials": {
+        "telegramApi": {
+          "id": "p2lXYE6uXM1K7clR",
+          "name": "Telegram Finanzas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return ($('Reporte').first().json.graficas || []).map(g => ({ json: { titulo: g.titulo, body: { chart: g.chart, version: '4', width: g.ancho || 1000, height: g.alto || 560, devicePixelRatio: 2, backgroundColor: '#FFFFFF', format: 'png' } } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        1072
+      ],
+      "id": "f748eed1-2139-47ee-8004-8921c552e07a",
+      "name": "Gráficas",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1296,
+        1072
+      ],
+      "id": "97441fca-d43e-41e6-8af6-8391d2afa6aa",
+      "name": "Crear gráfica",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "7739445962",
+        "file": "={{ $json.url }}",
+        "additionalFields": {
+          "caption": "={{ String($('Gráficas').item.json.titulo || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1072,
+        1072
+      ],
+      "id": "d09e40d5-a69a-4fcb-910c-1d8f48d62c8d",
+      "name": "Enviar gráfica",
+      "webhookId": "80e750be-edd8-45d8-be9d-1b521d4d813a",
+      "credentials": {
+        "telegramApi": {
+          "id": "p2lXYE6uXM1K7clR",
+          "name": "Telegram Finanzas"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e96aa24a-06a4-4062-a37e-fab78ebff43a",
+              "leftValue": "={{ Array.isArray($json.botones) && $json.botones.length === 4 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2668,
+        284
+      ],
+      "id": "b0b5efce-5c45-4cda-901f-9275a4a99a67",
+      "name": "¿Con opciones?"
+    },
+    {
+      "parameters": {
+        "chatId": "7739445962",
+        "text": "={{ String($json.texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "={{ $json.botones[0].texto }}",
+                    "additionalFields": {
+                      "callback_data": "={{ 'pc:' + $json.pc + ':' + $json.botones[0].valor }}"
+                    }
+                  },
+                  {
+                    "text": "={{ $json.botones[1].texto }}",
+                    "additionalFields": {
+                      "callback_data": "={{ 'pc:' + $json.pc + ':' + $json.botones[1].valor }}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "={{ $json.botones[2].texto }}",
+                    "additionalFields": {
+                      "callback_data": "={{ 'pc:' + $json.pc + ':' + $json.botones[2].valor }}"
+                    }
+                  },
+                  {
+                    "text": "={{ $json.botones[3].texto }}",
+                    "additionalFields": {
+                      "callback_data": "={{ 'pc:' + $json.pc + ':' + $json.botones[3].valor }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2448,
+        184
+      ],
+      "id": "925f2cbd-48b7-479d-b641-5de614c77871",
+      "name": "Enviar con opciones",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "webhookId": "25f9bd00-3e52-494f-a0f4-4664807a28ae",
+      "credentials": {
+        "telegramApi": {
+          "id": "p2lXYE6uXM1K7clR",
+          "name": "Telegram Finanzas"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cada día 7:00": {
+      "main": [
+        [
+          {
+            "node": "Leer hoja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resúmenes": {
+      "main": [
+        [
+          {
+            "node": "Leer hoja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer hoja": {
+      "main": [
+        [
+          {
+            "node": "Tablas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tablas": {
+      "main": [
+        [
+          {
+            "node": "¿Es resumen?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es resumen?": {
+      "main": [
+        [
+          {
+            "node": "Metadatos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedidos de precios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedidos de precios": {
+      "main": [
+        [
+          {
+            "node": "Consultar precios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar precios": {
+      "main": [
+        [
+          {
+            "node": "Precios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Precios": {
+      "main": [
+        [
+          {
+            "node": "Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agenda": {
+      "main": [
+        [
+          {
+            "node": "Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "¿Hay escritura?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay escritura?": {
+      "main": [
+        [
+          {
+            "node": "Escribir hoja",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escribir hoja": {
+      "main": [
+        [
+          {
+            "node": "Mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensajes": {
+      "main": [
+        [
+          {
+            "node": "¿Con botones?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Con botones?": {
+      "main": [
+        [
+          {
+            "node": "¿Con opciones?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metadatos": {
+      "main": [
+        [
+          {
+            "node": "Reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reporte": {
+      "main": [
+        [
+          {
+            "node": "¿Semanal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Semanal?": {
+      "main": [
+        [
+          {
+            "node": "Copiar hoja",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Solicitudes R",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copiar hoja": {
+      "main": [
+        [
+          {
+            "node": "Buscar respaldos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar respaldos": {
+      "main": [
+        [
+          {
+            "node": "Respaldos viejos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respaldos viejos": {
+      "main": [
+        [
+          {
+            "node": "¿Hay viejos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay viejos?": {
+      "main": [
+        [
+          {
+            "node": "Borrar respaldo viejo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Solicitudes R",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar respaldo viejo": {
+      "main": [
+        [
+          {
+            "node": "Solicitudes R",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitudes R": {
+      "main": [
+        [
+          {
+            "node": "¿Hay cambios?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay cambios?": {
+      "main": [
+        [
+          {
+            "node": "Escribir hoja R",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Hay mensaje?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escribir hoja R": {
+      "main": [
+        [
+          {
+            "node": "¿Hay mensaje?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay mensaje?": {
+      "main": [
+        [
+          {
+            "node": "Enviar resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar resumen": {
+      "main": [
+        [
+          {
+            "node": "Gráficas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gráficas": {
+      "main": [
+        [
+          {
+            "node": "Crear gráfica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear gráfica": {
+      "main": [
+        [
+          {
+            "node": "Enviar gráfica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Con opciones?": {
+      "main": [
+        [
+          {
+            "node": "Enviar con opciones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar con botones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "qMWZ59kHUj386TnZ",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "America/Bogota"
+  },
+  "meta": {
+    "instanceId": "636f9abe3732d321f23bb156c56fcf6965c5c062c60274f1585a78c832783a36"
+  },
+  "nodeGroups": [],
+  "id": "1XhWwChCMYu5StPp",
+  "tags": []
+}

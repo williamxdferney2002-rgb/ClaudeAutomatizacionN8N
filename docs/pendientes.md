@@ -27,7 +27,7 @@
 - **Bot v10 (encontrado al probar v9)**: al confirmar "Sí, de Nequi" cuando una cuenta queda en negativo, v9 volvía a preguntar sin fin porque se perdía `cuenta_ok`; corregido en v10.
 - **Bot v10 › ¿Es corrección?**: las dos ramas van a *Ejecutar*; el IF sobra o falta la ruta distinta.
 - **Bot v10 › Borrar movimientos / Borrar cuotas**: sin reintento ni `onError` (además del borrado físico del Bloque 2).
-- **Programado v5 › Enviar gráfica**: caption sin `parse_mode` HTML.
+- ~~Programado v5 › Enviar gráfica: caption sin `parse_mode` HTML~~ (corregido en v6).
 
 ## Bloque 2 de la auditoría (v11)
 - v10 ya revierte en `/deshacer` las cuotas de préstamo de un cobro (detalle `Cuotas préstamo: ID=valor` en *Comentarios*).
