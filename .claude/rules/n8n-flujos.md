@@ -11,4 +11,4 @@ paths:
 - Escritura: *Ejecutar* arma `ops` `{tabla, tipo: append|update, fila|row+cambios}` → *Solicitudes* (un append por pestaña y un `values:batchUpdate`; protege `= + @` y textos tipo "1/2" fuera de las columnas de fecha) → *Escribir hoja* (batchSize 1).
 - Telegram: `additionalFields: {appendAttribution: false, parse_mode: "HTML"}` y el texto con `.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')` en la expresión. Botones: callback `pc:<ID Por confirmar>:<valor>` (máx. 64 bytes); botones en pares (2/4/6) con ❌ Cancelar.
 - Nunca enviar un número 0 o una categoría vacía en Gasto/Ingreso (Plan lo rechaza). Montos en COP redondeados a enteros.
-- Antes de entregar: `check_workflow.py` de la skill `n8n-workflow-check` + simulación de los Code nodes con datos reales (Node + Luxon) en casos válidos, inválidos y duplicados.
+- Antes de entregar: `python3 .claude/skills/n8n-workflow-check/scripts/check_workflow.py NUEVO.json --base ANTERIOR.json` (0 ❌) + `simular_code.js` de los Code modificados con datos reales (Node + Luxon) en casos válidos, inválidos y duplicados. Ver la skill `n8n-workflow-check`.

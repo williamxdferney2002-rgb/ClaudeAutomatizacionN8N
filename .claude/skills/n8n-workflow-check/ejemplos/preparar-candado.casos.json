@@ -1,0 +1,146 @@
+[
+  {
+    "nombre": "confirmación pendiente en la fila 5, columna Estado = C",
+    "tipo": "valido",
+    "ejecucion": "9001",
+    "nodos": {
+      "Tablas": [
+        {
+          "_h": {
+            "Por confirmar": [
+              "ID",
+              "Fecha",
+              "Estado"
+            ]
+          }
+        }
+      ],
+      "Leer confirmación": [
+        {
+          "ID": "P123",
+          "Estado": "Pendiente",
+          "row_number": 5
+        }
+      ]
+    },
+    "espera": {
+      "salida": [
+        {
+          "vigente": true,
+          "token": "Procesando 9001",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM/values/'Por%20confirmar'!C5"
+        }
+      ]
+    }
+  },
+  {
+    "nombre": "columna Estado más allá de la Z (columna 28 = AB)",
+    "tipo": "valido",
+    "nodos": {
+      "Tablas": [
+        {
+          "_h": {
+            "Por confirmar": [
+              "c1",
+              "c2",
+              "c3",
+              "c4",
+              "c5",
+              "c6",
+              "c7",
+              "c8",
+              "c9",
+              "c10",
+              "c11",
+              "c12",
+              "c13",
+              "c14",
+              "c15",
+              "c16",
+              "c17",
+              "c18",
+              "c19",
+              "c20",
+              "c21",
+              "c22",
+              "c23",
+              "c24",
+              "c25",
+              "c26",
+              "c27",
+              "Estado"
+            ]
+          }
+        }
+      ],
+      "Leer confirmación": [
+        {
+          "ID": "P1",
+          "Estado": "Pendiente",
+          "row_number": 2
+        }
+      ]
+    },
+    "espera": {
+      "salida": [
+        {
+          "vigente": true
+        }
+      ],
+      "contiene": [
+        "!AB2"
+      ]
+    }
+  },
+  {
+    "nombre": "la confirmación no existe (botón viejo)",
+    "tipo": "invalido",
+    "nodos": {
+      "Tablas": [
+        {
+          "_h": {}
+        }
+      ],
+      "Leer confirmación": [
+        {}
+      ]
+    },
+    "espera": {
+      "salida": [
+        {
+          "vigente": false
+        }
+      ]
+    }
+  },
+  {
+    "nombre": "segundo toque: la confirmación ya fue respondida",
+    "tipo": "duplicado",
+    "nodos": {
+      "Tablas": [
+        {
+          "_h": {
+            "Por confirmar": [
+              "ID",
+              "Estado"
+            ]
+          }
+        }
+      ],
+      "Leer confirmación": [
+        {
+          "ID": "P123",
+          "Estado": "Respondida",
+          "row_number": 5
+        }
+      ]
+    },
+    "espera": {
+      "salida": [
+        {
+          "vigente": false
+        }
+      ]
+    }
+  }
+]
