@@ -1,0 +1,32 @@
+[
+  {
+    "nombre": "mensaje de texto con un gasto",
+    "tipo": "valido",
+    "entrada": [{ "update_id": 501, "message": { "message_id": 77, "chat": { "id": 7739445962 }, "from": { "id": 7739445962 }, "text": "Gasté $50.000 en gasolina" } }],
+    "espera": { "cantidad": 1, "salida": [{ "tipo_update": "mensaje", "clave": "tg_501", "chat_id": "7739445962", "texto": "Gasté $50.000 en gasolina", "tiene_voz": false }], "no_contiene": ["undefined"] }
+  },
+  {
+    "nombre": "toque de botón",
+    "tipo": "valido",
+    "entrada": [{ "update_id": 502, "callback_query": { "id": "cb1", "data": "pc:P123:si", "from": { "id": 7739445962 }, "message": { "message_id": 78, "text": "¿Registro el gasto?" } } }],
+    "espera": { "salida": [{ "tipo_update": "boton", "callback_data": "pc:P123:si", "texto": "", "boton_texto": "¿Registro el gasto?" }] }
+  },
+  {
+    "nombre": "nota de voz",
+    "tipo": "valido",
+    "entrada": [{ "update_id": 503, "message": { "message_id": 79, "chat": { "id": 7739445962 }, "voice": { "file_id": "VOZ1" } } }],
+    "espera": { "salida": [{ "tiene_voz": true, "voice_file_id": "VOZ1", "texto": "" }] }
+  },
+  {
+    "nombre": "update sin message ni callback (p. ej. edited_message)",
+    "tipo": "invalido",
+    "entrada": [{ "update_id": 504, "edited_message": { "text": "x" } }],
+    "espera": { "cantidad": 1, "salida": [{ "chat_id": "", "texto": "" }] }
+  },
+  {
+    "nombre": "mismo update repetido por Telegram: misma clave para que 'Buscar en log' lo detecte",
+    "tipo": "duplicado",
+    "entrada": [{ "update_id": 501, "message": { "message_id": 77, "chat": { "id": 7739445962 }, "text": "Gasté $50.000 en gasolina" } }],
+    "espera": { "salida": [{ "clave": "tg_501" }] }
+  }
+]
