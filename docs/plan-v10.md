@@ -26,19 +26,20 @@ Ingeniero William aquí. Vamos a **planear** (todavía no construir) la versión
 - Las deudas sueltas se calculan aparte en *Contexto* (`deudas`: *Préstamo dado* sin referencia `PR-` − *Abono recibido*). "Me pagó todo" con una deuda suelta debería ser **registrar Abono recibido**, no `cobrar_cuota`.
 - Plan, `buscarPrestamo(id, persona)`:
   - Compara `persona` con igualdad o `includes`, **sin usar el alias de *Personas***, así que "mi mamá" no coincide con el nombre guardado.
-  - Si no llega ni ID ni persona, **devuelve el único préstamo que exista**. Así pudo caer en Doña Sandra.
+  - Si no llega ni ID ni persona, devuelve el único préstamo que exista. **No fue la causa aquí**: hay 3 préstamos (PR-01, PR-02, PR-03), así que la IA devolvió `PR-02` por su cuenta. Igual se quita el comodín.
 - Plan, `cobrar_cuota`:
   - No pide confirmación.
   - Acepta el `prestamo` que devuelva la IA aunque su persona no sea la que dije.
   - "todo" no se interpreta como el saldo completo: registró una cuota parcial de $240.000.
 - La IA de audio recibe la *conversación reciente* y puede arrastrar nombres de mensajes anteriores. Es el mismo problema del error 1 de `pendientes.md`.
 
-### Dudas que debes resolver conmigo antes de diseñar (pregúntame)
-- ¿Cómo quedaron registrados los pagos con tarjeta por mi mamá?
-  - ¿Como *Préstamo dado* con la tarjeta como cuenta, como `crear_prestamo` con `cuotas_tarjeta`, o solo como *Gasto*?
-  - Pídeme las filas de *Movimientos*, *Préstamos* y *Cuotas tarjeta* donde aparezca ella, o una captura.
-- ¿Con qué nombre y alias está mi mamá en *Personas*? ¿Y Doña Sandra? Quizá "mamá" esté como alias de la persona equivocada.
-- Si los pagos de ella quedaron como *Gasto* (sin deuda), hay que convertirlos en deuda. Propón cómo hacerlo sin borrar filas (Bloque 2: anular en vez de borrar).
+### Datos confirmados con el Excel del 3-oct (ya no hay que preguntarlos)
+- *Personas*: **Mamá** (alias `mi mamá, mamá, mama, mi mama, doña Leo`, relación Familia). **Doña Sandra** (alias `sandra, doña sandra`). Los alias están bien: "mamá" no es alias de Sandra.
+- La deuda de Mamá era **suelta**: tres *Préstamo dado* sin `PR-` (Pastillas $105.000, Creatina $135.000, Supermercado $132.596) menos un *Abono recibido* de $132.596 = **$240.000**. **No tenía préstamo formal**, por eso `cobrar_cuota` no la encontró.
+- William ya registró el abono de $240.000 de Mamá a Nequi (MOV-261003145400-3426-1). Mamá queda en $0.
+- *Log Bot* 3411: la voz se registró como `cobrar_cuota` de PR-02. El 3412-3414 lo deshizo con `/deshacer`, que **borró el movimiento pero NO revirtió *Cuotas préstamo***. PR-02-4 quedó *Pagada* y PR-02-5 con $68.600 recibidos, ambas con `ID movimiento` MOV-261003144424-3411-1, que ya no existe. **Doña Sandra aparece debiendo $274.200 y en realidad debe $514.200** (3 cuotas de $171.400) más $9.000 de Netflix.
+- **Error nuevo G: `/deshacer` no revierte cobros de préstamo.** *Filas a borrar* y *Cuotas a borrar* solo cubren *Movimientos* y *Cuotas tarjeta*. Se arregla en la v10 con un mínimo: al deshacer un `Cobro cuota`, restar lo pagado en las cuotas con ese `ID movimiento` y devolverlas a *Pendiente*. El resto del Bloque 2 sigue pendiente.
+- **Corrección H, pedida por William:** en `/cobrar` (nodo *Consultar*), el mensaje empezaba con "📋 Mensaje para X (cópialo y reenvíalo):", y eso estorbaba al copiar. El mensaje debe ser **solo** el texto para la persona. William puede aplicarlo a mano en v9 mientras tanto.
 
 ## Soluciones propuestas para la v10 (punto de partida)
 - **A. Nunca registrar un cobro sin confirmar cuando la persona no coincide.**
@@ -61,6 +62,8 @@ Ingeniero William aquí. Vamos a **planear** (todavía no construir) la versión
 - **E. Voz por el mismo camino que el texto.**
   - Whisper primero, luego *Atajo* y luego IA de texto, con el multimodal como respaldo (error 1 de `pendientes.md`).
   - Atajo nuevo: "X me pagó todo" → resolver sin IA cuando la persona y la deuda son claras.
+- **G. `/deshacer` de un cobro de préstamo** revierte *Cuotas préstamo* (ver arriba).
+- **H. `/cobrar` sin encabezado**: solo el texto para la persona.
 - **F. Arrastrar a la v10 lo pequeño:**
   - `sello` con `$execution.id` en *Preparar archivo* y *Res duplicado*.
   - `active: false` y `settings.timezone = "America/Bogota"`.
@@ -70,7 +73,7 @@ Ingeniero William aquí. Vamos a **planear** (todavía no construir) la versión
 
 ## Lo que espero de ti en esta sesión
 1. Lee el código real de *Contexto*, *Plan*, *Ejecutar* y *Atajo* para confirmar o corregir las causas de arriba, con la línea o el fragmento exacto.
-2. Hazme las preguntas de datos. Sin ellas no diseñes la parte D.
+2. Los datos ya están confirmados (sección anterior). Pregunta solo si algo no cuadra con el código.
 3. Preséntame el plan de la v10:
    - qué nodos cambian;
    - nodos nuevos, si hay;

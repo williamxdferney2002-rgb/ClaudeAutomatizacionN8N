@@ -6,7 +6,9 @@
    - Solución: ver [plan-v10.md](plan-v10.md), puntos A y C.
 6. **CRÍTICO · "Ya me pagó todo mi mamá a nequi" no encuentra la deuda.** Responde *"No encontré un préstamo con cuotas para esa persona"*. La deuda de la mamá viene de compras hechas por ella con la tarjeta.
    - Causa probable: (a) la IA eligió `cobrar_cuota`, que solo busca préstamos formales (*Préstamos*), no las deudas sueltas (*Préstamo dado* − *Abono recibido*); (b) "mamá" no coincide con el nombre guardado (`buscarPrestamo` compara `persona` por igualdad o `includes`, sin alias de *Personas*); (c) las compras con tarjeta quizá no quedaron como deuda de ella.
-   - Solución: ver [plan-v10.md](plan-v10.md), puntos B, C y D.
+   - Confirmado con el Excel: la deuda era suelta (*Préstamo dado* − *Abono*), sin préstamo formal. Solución: ver [plan-v10.md](plan-v10.md), punto B.
+7. **CRÍTICO · `/deshacer` de un cobro de préstamo deja las cuotas pagadas.** Al deshacer el cobro equivocado a Doña Sandra se borró el movimiento, pero PR-02-4 quedó *Pagada* y PR-02-5 con $68.600. Corrección manual de datos en la hoja y arreglo en la v10 (punto G).
+8. **`/cobrar`: el encabezado "📋 Mensaje para X (cópialo y reenvíalo)" estorba al copiar.** Arreglo en *Consultar* (punto H).
 
 ## Errores detectados el 2-oct-2026 (capturas)
 1. **CRÍTICO · Préstamo registrado como gasto y con otro nombre.** Por voz dijo *"le presté 7000 pesos a Nicolás para pagar YouTube, la plata salió de Rappi Ahorros"* y quedó como *"gasto de $7.000 en Suscripciones (Pago a Spotify)"*, sin confirmar.
