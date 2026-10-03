@@ -9,6 +9,7 @@ Tres agentes en producción: **Finanzas** (Telegram), **Asistente personal** (Te
 - **Antes de cambios grandes, presenta el plan y espera su "dale".** Él suele pedir primero el resumen y luego la construcción.
 - Cada entrega lleva: qué cambió, cómo instalarlo (orden exacto), qué nodos revisar al importar y pruebas sugeridas en Telegram.
 - Prueba antes de entregar con **casos válidos, inválidos y duplicados** (skill `n8n-workflow-check`). Di con honestidad qué NO se ejecutó dentro de n8n.
+- Antes de decir que algo está listo, corre la skill `auditar-entrega` (diff real, verificación, formato y documentación). La auditoría completa del proyecto es `/auditoria-proyecto [finanzas|asistente|pagos|todo]`, solo cuando William la pida. Skills instaladas y cómo llevarlas a otro proyecto: [docs/instalar-skills.md](docs/instalar-skills.md).
 - Si una meta del plan no se cumple (por ejemplo, la reducción del prompt), dilo con el número real.
 
 ## Infraestructura (resumen)

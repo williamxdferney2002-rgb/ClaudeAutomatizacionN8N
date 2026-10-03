@@ -9,6 +9,13 @@
 3. **Audio "¿cuánto me debe Andrea?"** → una vez respondió con los movimientos de Nu del día; al repetirlo, bien. Causa: la IA de audio eligió `consultar_movimientos` (no determinista). Solución: el mismo camino Whisper + atajos (*"cuánto me debe X"* → `consultar_deudas` sin IA) y una regla explícita en el prompt.
 4. **`/cobrar` sin nombre** solo pide el nombre. Mejora: botones con quienes te deben.
 
+## Hallazgos de `n8n-workflow-check` (3-oct-2026, exports en producción)
+- **Asistente - Errores › Avisar error** sin `parse_mode: HTML` ni escape: un `_` o `*` en el mensaje de error rompe el aviso (el mismo pendiente manual que Finanzas - Errores).
+- **Bot v9 › Preparar archivo** y **Res duplicado**: `sello` sin `$execution.id`; dos archivos en el mismo segundo chocan.
+- **Bot v9 › ¿Es corrección?**: las dos ramas van a *Ejecutar*; el IF sobra o falta la ruta distinta.
+- **Bot v9 › Borrar movimientos / Borrar cuotas**: sin reintento ni `onError` (además del borrado físico del Bloque 2).
+- **Programado v5 › Enviar gráfica**: caption sin `parse_mode` HTML.
+
 ## Bloque 2 de la auditoría (v10)
 - Anular en vez de borrar (columna Estado registro), bitácora *Cambios* y `/deshacer` completo (préstamos, cobros, reventas, inversiones, cuentas). Ajustar las fórmulas de *Resumen* y Looker para ignorar los anulados.
 - Escrituras por número de fila (S3) y escritura no atómica (S4).
