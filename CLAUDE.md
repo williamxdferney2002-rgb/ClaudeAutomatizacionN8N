@@ -32,7 +32,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 ## Flujos y versiones actuales
 | Flujo | Versión | Nodos | Notas |
 |---|---|---|---|
-| Finanzas - Bot | **v10** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v10.json` (entregada el 3-oct, pendiente de importar) |
+| Finanzas - Bot | **v11** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v11.json` (3-oct: v10 + `/cobrar` limpio y con botones, guardia de "presté") |
 | Finanzas - Programado | **v5** | 32 | `flujos/finanzas/finanzas-programado-v5.json`. Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
 | Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
@@ -56,7 +56,7 @@ Detalle de convenciones de código para nodos Code y JSON: ver [.claude/rules/n8
 No hay build ni tests de n8n en el repo; la verificación es estática más la simulación de nodos Code. Luxon lo instala el hook `.claude/hooks/session-start.sh`.
 ```bash
 S=.claude/skills/n8n-workflow-check/scripts
-F=flujos/finanzas/finanzas-bot-v10.json
+F=flujos/finanzas/finanzas-bot-v11.json
 python3 $S/check_workflow.py $F --modo produccion            # revisión completa; "Resultado: N errores, M avisos"
 python3 $S/check_workflow.py nuevo.json --base $F            # versión nueva contra el export anterior (IDs, webhookId, credenciales)
 # el export anterior sale del historial: git show <commit>:flujos/finanzas/finanzas-bot-v9.json > /tmp/v9.json
@@ -71,7 +71,7 @@ Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Li
 **No usar Gemini 3.8 Flash** (20 peticiones al día). Las cuotas diarias se reinician a medianoche del Pacífico (2:00 a. m. en Colombia; 3:00 a. m. desde noviembre). **No activar facturación.**
 
 ## Estado y próximos pasos
-Errores abiertos (2 de octubre): audio que se malinterpreta, un préstamo registrado como gasto, `/suscripciones` incompleto y `/cobrar` sin opciones.
-Los errores del 3 de octubre (pago de la mamá, cobro a Doña Sandra, `/deshacer` de cobros, encabezado de `/cobrar`) y los del audio quedan resueltos en la **v10** ([docs/plan-v10.md](docs/plan-v10.md)); falta probarla en Telegram y corregir a mano las cuotas PR-02-4 y PR-02-5 en la hoja.
+Errores abiertos: `/suscripciones` incompleto (del 2 de octubre). En la v11 quedan resueltos el audio, el préstamo registrado como gasto (guardia de "presté") y `/cobrar` sin opciones o con símbolos pegados al nombre.
+Los errores del 3 de octubre (pago de la mamá, cobro a Doña Sandra, `/deshacer` de cobros, encabezado de `/cobrar`) y los del audio quedan resueltos desde la **v10** ([docs/plan-v10.md](docs/plan-v10.md)). Falta en la hoja: cuotas PR-02-4/5 y el gasto de Spotify que era un préstamo a Nicolás ([docs/pendientes.md](docs/pendientes.md)).
 Pendientes grandes: Bloque 2 de la auditoría (anular en vez de borrar y `/deshacer` completo), Asistente v4 (hábitos y memoria) y dashboard en Looker Studio, que William quiere aprender.
 Lista priorizada con causas y soluciones: [docs/pendientes.md](docs/pendientes.md). Lecciones aprendidas y diagnósticos: [docs/lecciones-aprendidas.md](docs/lecciones-aprendidas.md).

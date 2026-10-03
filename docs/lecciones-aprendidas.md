@@ -19,4 +19,5 @@
 | Pago de la mamá registrado como cuota de Doña Sandra | La IA de audio devolvió un préstamo de otra persona y *Plan* lo aceptó sin confirmar | La persona que nombra el mensaje manda sobre la IA; cobros siempre con confirmación (v10) |
 | "No encontré un préstamo" con una deuda suelta | `cobrar_cuota` solo miraba *Préstamos*, no *Préstamo dado* − *Abono* | Un solo "X me pagó" que decide entre préstamo y deuda suelta (v10) |
 | `/deshacer` de un cobro dejó cuotas pagadas | Solo se borraba el movimiento | Guardar `Cuotas préstamo: ID=valor` en *Comentarios* y revertir al deshacer (v10) |
+| "Papá → no te debe nada" | Se copió el comando con una flecha y el argumento no se limpiaba; una persona inexistente se reportaba como "no debe" | Limpiar el argumento de los comandos y decir "No encontré a X" (v11) |
 | Gemini 3.8 Flash al 20/20 | Límite de 20 al día | No usarlo en ningún flujo |

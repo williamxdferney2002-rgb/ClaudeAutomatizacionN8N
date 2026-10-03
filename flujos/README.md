@@ -3,7 +3,7 @@
 ## Inventario
 | Agente | Flujo | Versión | Archivo | Estado en el repo |
 |---|---|---|---|---|
-| Finanzas | Bot | v10 | [finanzas/finanzas-bot-v10.json](finanzas/finanzas-bot-v10.json) | ✅ (v9 en el historial de git) |
+| Finanzas | Bot | v11 | [finanzas/finanzas-bot-v11.json](finanzas/finanzas-bot-v11.json) | ✅ (v9 y v10 en el historial de git) |
 | Finanzas | Programado | v5 | [finanzas/finanzas-programado-v5.json](finanzas/finanzas-programado-v5.json) | ✅ |
 | Finanzas | Errores | v1 | `finanzas/finanzas-errores-v1.json` | — no se versiona por ahora |
 | Asistente | Entrada | v3 | `asistente/asistente-entrada-v3.json` | — no se versiona por ahora |
