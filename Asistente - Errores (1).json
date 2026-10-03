@@ -1,0 +1,347 @@
+{
+  "name": "Asistente - Errores",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        144,
+        320
+      ],
+      "id": "8c075139-6f15-400f-84c7-6e8ff2e83f06",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "7739445962",
+        "text": "=⚠️ Falló \"{{ $json.execution.lastNodeExecuted || ($json.execution.error && $json.execution.error.node && $json.execution.error.node.name) || 'un nodo' }}\" en {{ $json.workflow.name }} (ejecución {{ $json.execution.id }}).\n{{ String(($json.execution.error && $json.execution.error.message) || '').slice(0, 300) }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        112
+      ],
+      "id": "2454edcb-c198-4c0f-a624-89b4f4db5e00",
+      "name": "Avisar error",
+      "webhookId": "d2cbce36-38f4-4c43-8fd7-d93459aed87c",
+      "credentials": {
+        "telegramApi": {
+          "id": "v4cdKmHT2AHZJJun",
+          "name": "Telegram Asistente"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Operaciones",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Execution ID",
+              "lookupValue": "={{ $('Error Trigger').first().json.execution.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        608,
+        320
+      ],
+      "id": "2ec09dd2-da56-47a2-8d22-e3f47a5bd6d7",
+      "name": "Buscar operación",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4eb97320-ab7d-4f17-af57-33e4c8a23483",
+              "leftValue": "={{ !!$json.ID }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        320
+      ],
+      "id": "d78582b7-eeb1-4324-8679-eaa065795899",
+      "name": "¿Hay operación?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Operaciones",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.ID }}",
+            "Estado": "Error",
+            "Actualizado": "={{ $now.setZone('America/Bogota').toFormat('yyyy-MM-dd HH:mm') }}",
+            "Error": "={{ String(($('Error Trigger').first().json.execution.error || {}).message || '').slice(0, 300) }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Clave origen",
+              "displayName": "Clave origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Creado",
+              "displayName": "Creado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Actualizado",
+              "displayName": "Actualizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tipo entrada",
+              "displayName": "Tipo entrada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Acción",
+              "displayName": "Acción",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Mensaje",
+              "displayName": "Mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Respuesta",
+              "displayName": "Respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1104,
+        304
+      ],
+      "id": "c031a5a1-58e8-47c5-afbd-759185bf2193",
+      "name": "Marcar error",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Evita que un mismo error (p. ej. del Reloj, que corre cada 5-10 min) te llegue a Telegram una y otra vez: máximo 1 por hora\nconst e = $input.first().json;\nconst st = $getWorkflowStaticData('global');\nconst clave = [e.workflow && e.workflow.name, e.execution && e.execution.lastNodeExecuted, String((e.execution && e.execution.error && e.execution.error.message) || '').slice(0, 80)].join('|');\nconst ahora = Date.now();\nst.vistos = Object.fromEntries(Object.entries(st.vistos || {}).filter(([, t]) => ahora - t < 6 * 3600e3));\nif (st.vistos[clave] && ahora - st.vistos[clave] < 3600e3) return [];\nst.vistos[clave] = ahora;\nreturn [$input.first()];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        112
+      ],
+      "id": "cfac8492-100e-40b6-becb-b85dcb4554b5",
+      "name": "¿Repetido?"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "¿Repetido?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar operación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar operación": {
+      "main": [
+        [
+          {
+            "node": "¿Hay operación?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay operación?": {
+      "main": [
+        [
+          {
+            "node": "Marcar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Repetido?": {
+      "main": [
+        [
+          {
+            "node": "Avisar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "35078ce3-e244-415f-85d5-d986d55f7768",
+  "meta": {
+    "instanceId": "636f9abe3732d321f23bb156c56fcf6965c5c062c60274f1585a78c832783a36"
+  },
+  "nodeGroups": [],
+  "id": "W4ni5Pvv1u8nCMHr",
+  "tags": []
+}
