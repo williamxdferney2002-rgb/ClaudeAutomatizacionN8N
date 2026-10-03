@@ -16,4 +16,7 @@
 | Máquina colgada | `apt` con poca RAM | No correr upgrades con n8n encendido; Restablecer con IP estática |
 | n8n 502 tras reinicio | Task Runner lento ("grant token") | Esperar; opcional `N8N_RUNNERS_GRANT_TOKEN_TTL=120` |
 | Aviso de cuota de Gemma | 16K tokens por minuto | Flash Lite principal; atajos sin IA; prompt compacto |
+| Pago de la mamá registrado como cuota de Doña Sandra | La IA de audio devolvió un préstamo de otra persona y *Plan* lo aceptó sin confirmar | La persona que nombra el mensaje manda sobre la IA; cobros siempre con confirmación (v10) |
+| "No encontré un préstamo" con una deuda suelta | `cobrar_cuota` solo miraba *Préstamos*, no *Préstamo dado* − *Abono* | Un solo "X me pagó" que decide entre préstamo y deuda suelta (v10) |
+| `/deshacer` de un cobro dejó cuotas pagadas | Solo se borraba el movimiento | Guardar `Cuotas préstamo: ID=valor` en *Comentarios* y revertir al deshacer (v10) |
 | Gemini 3.8 Flash al 20/20 | Límite de 20 al día | No usarlo en ningún flujo |

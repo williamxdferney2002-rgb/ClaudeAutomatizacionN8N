@@ -1,5 +1,7 @@
 # Prompt para planear Finanzas - Bot v10
 
+> **Estado (3-oct-2026): construida** en `flujos/finanzas/finanzas-bot-v10.json` con los puntos A–H. Verificación: `check_workflow.py --base v9` 0 ❌ 0 ⚠️; Atajo 8/8; 53/53 comprobaciones en conversaciones completas con los datos reales del Excel. Falta: importar, probar en Telegram y corregir a mano PR-02-4/5.
+
 Copia todo lo que está debajo de la línea en una sesión nueva de Claude Code sobre este repositorio (rama con la reorganización ya subida).
 
 ---

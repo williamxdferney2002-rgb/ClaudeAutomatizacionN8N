@@ -32,7 +32,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 ## Flujos y versiones actuales
 | Flujo | Versión | Nodos | Notas |
 |---|---|---|---|
-| Finanzas - Bot | **v9** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v9.json` |
+| Finanzas - Bot | **v10** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v10.json` (entregada el 3-oct, pendiente de importar) |
 | Finanzas - Programado | **v5** | 32 | `flujos/finanzas/finanzas-programado-v5.json`. Diario 7:00; resúmenes domingo 19:00 y día 1 a las 8:00 |
 | Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
@@ -56,14 +56,15 @@ Detalle de convenciones de código para nodos Code y JSON: ver [.claude/rules/n8
 No hay build ni tests de n8n en el repo; la verificación es estática más la simulación de nodos Code. Luxon lo instala el hook `.claude/hooks/session-start.sh`.
 ```bash
 S=.claude/skills/n8n-workflow-check/scripts
-F=flujos/finanzas/finanzas-bot-v9.json
+F=flujos/finanzas/finanzas-bot-v10.json
 python3 $S/check_workflow.py $F --modo produccion            # revisión completa; "Resultado: N errores, M avisos"
 python3 $S/check_workflow.py nuevo.json --base $F            # versión nueva contra el export anterior (IDs, webhookId, credenciales)
+# el export anterior sale del historial: git show <commit>:flujos/finanzas/finanzas-bot-v9.json > /tmp/v9.json
 python3 $S/mapa_flujo.py $F --rutas --code                   # mapa de rutas y qué $('Nodo') lee cada Code
 node $S/simular_code.js $F "Plan" --plantilla > casos.json   # esqueleto de casos para UN nodo Code
 node $S/simular_code.js $F "Normalizar" .claude/skills/n8n-workflow-check/ejemplos/normalizar.casos.json
 ```
-La lógica vive en 4 nodos Code grandes: **Contexto** (arma el prompt y `deudas`/`prestamos`), **Plan** (valida y resuelve personas, cuentas y préstamos con `buscarPersona`, `buscarCuenta` y `buscarPrestamo`), **Ejecutar** (convierte la acción en `ops`) y **Consultar**. Para leerlos, extrae `jsCode` del JSON con Python; no edites el JSON a mano.
+La lógica vive en 4 nodos Code grandes: **Contexto** (arma el prompt y `deudas`/`prestamos`), **Plan** (valida y resuelve personas, cuentas y préstamos con `personaExistente`, `buscarCuenta` y `buscarPrestamo`; desde v10 decide los cobros "X me pagó"), **Ejecutar** (convierte la acción en `ops`) y **Consultar**. Para leerlos, extrae `jsCode` del JSON con Python; no edites el JSON a mano.
 
 ## IA y cuotas
 Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Lite** de respaldo para audio e imagen, **Gemma 4 31B** de respaldo de texto (límite de **16K tokens por minuto**, el más ajustado). Groq Whisper como respaldo de audio.
@@ -71,6 +72,6 @@ Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Li
 
 ## Estado y próximos pasos
 Errores abiertos (2 de octubre): audio que se malinterpreta, un préstamo registrado como gasto, `/suscripciones` incompleto y `/cobrar` sin opciones.
-Errores nuevos (3 de octubre): "mi mamá me pagó" no encuentra su deuda (pagos hechos por ella con la tarjeta) y por voz se registró como cuota de **Doña Sandra**, que es otra persona. Plan de la v10: [docs/plan-v10.md](docs/plan-v10.md).
+Los errores del 3 de octubre (pago de la mamá, cobro a Doña Sandra, `/deshacer` de cobros, encabezado de `/cobrar`) y los del audio quedan resueltos en la **v10** ([docs/plan-v10.md](docs/plan-v10.md)); falta probarla en Telegram y corregir a mano las cuotas PR-02-4 y PR-02-5 en la hoja.
 Pendientes grandes: Bloque 2 de la auditoría (anular en vez de borrar y `/deshacer` completo), Asistente v4 (hábitos y memoria) y dashboard en Looker Studio, que William quiere aprender.
 Lista priorizada con causas y soluciones: [docs/pendientes.md](docs/pendientes.md). Lecciones aprendidas y diagnósticos: [docs/lecciones-aprendidas.md](docs/lecciones-aprendidas.md).

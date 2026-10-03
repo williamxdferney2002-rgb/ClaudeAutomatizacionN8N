@@ -25,7 +25,7 @@ El encargo, las 23 secciones y el formato de salida son los del prompt de Willia
 | Plan, reglas de negocio, versiones | `CLAUDE.md`, `docs/finanzas-arquitectura.md`, `docs/asistente-y-pagos.md` |
 | Errores abiertos y pendientes ya conocidos | `docs/pendientes.md`, `docs/lecciones-aprendidas.md` |
 | Infraestructura, IDs | `docs/infraestructura.md`, `docs/ids-y-credenciales.md` |
-| Flujos (implementación) | `*.json` en la raíz (hoy: `Finanzas - Bot v9`, `Finanzas - Programado v5`, `Asistente - Errores`) |
+| Flujos (implementación) | `flujos/<agente>/*.json` (hoy: `finanzas-bot-v10`, `finanzas-programado-v5`, `asistente-errores-v3`) |
 
 Antes de auditar, liste qué flujos del CLAUDE.md **no** están en el repo (p. ej. Asistente Entrada/Reloj v3, Agente de Pagos, Finanzas - Errores) y pídale a William los exports. Si sigue sin ellos, audite lo disponible y marque esos módulos como ❓ con esa razón; **no** estime su avance como si existieran.
 
