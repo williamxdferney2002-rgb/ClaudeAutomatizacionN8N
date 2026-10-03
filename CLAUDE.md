@@ -52,11 +52,25 @@ Asistente personal y bot de pagos: [docs/asistente-y-pagos.md](docs/asistente-y-
 
 Detalle de convenciones de código para nodos Code y JSON: ver [.claude/rules/n8n-flujos.md](.claude/rules/n8n-flujos.md) (se carga al editar JSON de flujos).
 
+## Comandos de verificación (sin n8n)
+No hay build ni tests de n8n en el repo; la verificación es estática más la simulación de nodos Code. Luxon lo instala el hook `.claude/hooks/session-start.sh`.
+```bash
+S=.claude/skills/n8n-workflow-check/scripts
+F=flujos/finanzas/finanzas-bot-v9.json
+python3 $S/check_workflow.py $F --modo produccion            # revisión completa; "Resultado: N errores, M avisos"
+python3 $S/check_workflow.py nuevo.json --base $F            # versión nueva contra el export anterior (IDs, webhookId, credenciales)
+python3 $S/mapa_flujo.py $F --rutas --code                   # mapa de rutas y qué $('Nodo') lee cada Code
+node $S/simular_code.js $F "Plan" --plantilla > casos.json   # esqueleto de casos para UN nodo Code
+node $S/simular_code.js $F "Normalizar" .claude/skills/n8n-workflow-check/ejemplos/normalizar.casos.json
+```
+La lógica vive en 4 nodos Code grandes: **Contexto** (arma el prompt y `deudas`/`prestamos`), **Plan** (valida y resuelve personas, cuentas y préstamos con `buscarPersona`, `buscarCuenta` y `buscarPrestamo`), **Ejecutar** (convierte la acción en `ops`) y **Consultar**. Para leerlos, extrae `jsCode` del JSON con Python; no edites el JSON a mano.
+
 ## IA y cuotas
 Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Lite** de respaldo para audio e imagen, **Gemma 4 31B** de respaldo de texto (límite de **16K tokens por minuto**, el más ajustado). Groq Whisper como respaldo de audio.
 **No usar Gemini 3.8 Flash** (20 peticiones al día). Las cuotas diarias se reinician a medianoche del Pacífico (2:00 a. m. en Colombia; 3:00 a. m. desde noviembre). **No activar facturación.**
 
 ## Estado y próximos pasos
 Errores abiertos (2 de octubre): audio que se malinterpreta, un préstamo registrado como gasto, `/suscripciones` incompleto y `/cobrar` sin opciones.
+Errores nuevos (3 de octubre): "mi mamá me pagó" no encuentra su deuda (pagos hechos por ella con la tarjeta) y por voz se registró como cuota de **Doña Sandra**, que es otra persona. Plan de la v10: [docs/plan-v10.md](docs/plan-v10.md).
 Pendientes grandes: Bloque 2 de la auditoría (anular en vez de borrar y `/deshacer` completo), Asistente v4 (hábitos y memoria) y dashboard en Looker Studio, que William quiere aprender.
 Lista priorizada con causas y soluciones: [docs/pendientes.md](docs/pendientes.md). Lecciones aprendidas y diagnósticos: [docs/lecciones-aprendidas.md](docs/lecciones-aprendidas.md).
