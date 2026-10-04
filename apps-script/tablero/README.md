@@ -35,7 +35,7 @@ Pegue los archivos nuevos → **Guardar** → **Implementar → Administrar impl
 
 ## Seguridad
 - Acceso **Solo yo**: nadie más puede abrir la URL, aunque la tenga.
-- Permisos que pide: leer esta hoja y mostrar el menú. No usa internet aparte de cargar la librería de gráficas (Chart.js desde cdnjs).
+- Permisos que pide: leer esta hoja y mostrar el menú. Además de la hoja, solo carga la librería de gráficas (Chart.js desde cdnjs) y la tipografía (Google Fonts).
 - Todo el texto de la hoja se muestra escapado (un `<script>` en un detalle se ve como texto, no se ejecuta).
 
 ## Diseño (v2, 4-oct)
