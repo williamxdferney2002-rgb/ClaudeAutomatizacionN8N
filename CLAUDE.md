@@ -7,7 +7,7 @@ Tres agentes en producción: **Finanzas** (Telegram), **Asistente personal** (Te
 - Dirígete a él como **"Ingeniero William"** en cada respuesta. Responde en **español**, claro y sin relleno.
 - Entrega **automatizaciones funcionales y optimizadas**: JSON importable, no fragmentos sueltos, salvo que pida un cambio manual pequeño.
 - **Antes de cambios grandes, presenta el plan y espera su "dale".** Él suele pedir primero el resumen y luego la construcción.
-- Cada entrega lleva: qué cambió, cómo instalarlo (orden exacto), qué nodos revisar al importar y pruebas sugeridas en Telegram.
+- Cada entrega lleva: qué cambió, cómo instalarlo (orden exacto), qué nodos revisar al importar y pruebas sugeridas en Telegram. En el tablero (Apps Script) no hay nodos. Las instrucciones son: pegar los archivos, crear una **nueva versión** de la implementación (la URL no cambia) y avisar si Google pedirá autorizar otra vez porque cambiaron los permisos.
 - Prueba antes de entregar con **casos válidos, inválidos y duplicados** (skill `n8n-workflow-check`). Di con honestidad qué NO se ejecutó dentro de n8n.
 - Antes de decir que algo está listo, corre la skill `auditar-entrega` (diff real, verificación, formato y documentación). La auditoría completa del proyecto es `/auditoria-proyecto [finanzas|asistente|pagos|todo]`, solo cuando William la pida. Skills instaladas y cómo llevarlas a otro proyecto: [docs/instalar-skills.md](docs/instalar-skills.md).
 - Si una meta del plan no se cumple (por ejemplo, la reducción del prompt), dilo con el número real.
@@ -68,6 +68,22 @@ node $S/simular_code.js $F "Plan" --plantilla > casos.json   # esqueleto de caso
 node $S/simular_code.js $F "Normalizar" .claude/skills/n8n-workflow-check/ejemplos/normalizar.casos.json
 ```
 La lógica vive en 4 nodos Code grandes: **Contexto** (arma el prompt y `deudas`/`prestamos`), **Plan** (valida y resuelve personas, cuentas y préstamos con `personaExistente`, `buscarCuenta` y `buscarPrestamo`; desde v10 decide los cobros "X me pagó"), **Ejecutar** (convierte la acción en `ops`) y **Consultar**. Para leerlos, extrae `jsCode` del JSON con Python; no edites el JSON a mano.
+
+### Tablero (Apps Script) fuera de Google
+`Codigo.gs` exporta sus funciones con `module.exports` al final, así que se carga en Node con `require` (cópielo a `.js`).
+- **Cálculo:** `calcular(T, ahora)` es pura. `T` tiene las pestañas como objetos por encabezado (`filasDe_`), y las fechas como `Date` a medianoche de Bogotá, igual que `getValues()`.
+- **Escrituras:** `corregirMovimiento`, `registrarPago` y `deshacerCambio` necesitan simular `SpreadsheetApp` (`getSheetByName` → `getDataRange().getValues()`, `appendRow`, `getRange(r,c).setValue`, `deleteRow`) y `LockService`.
+- **Navegador:** `Index.html` se prueba en Chromium con Playwright (`executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'`). `google.script.run` se simula, conectado a ese `Codigo.gs` con `page.exposeFunction`.
+- **Fixtures:** las de pruebas salen del Excel de William, tienen datos personales y **no se suben al repo**. Van en el scratchpad o en `/tmp`.
+
+### Lógica repetida que debe cambiar a la vez
+- *Contexto*/*Reporte* del bot (saldos, deuda suelta = Préstamo dado sin `PR-` − Abono recibido, cuotas, CDT con interés, tarjeta) ↔ `calcular()` de `Codigo.gs`.
+- `cobrar_cuota` y `/deshacer` de *Ejecutar* ↔ `registrarPago` y `deshacerCambio` de `Codigo.gs`. Comparten el formato que `/deshacer` necesita:
+  - IDs `MOV-yyMMddHHmmss-…-N` y `OP-…`;
+  - en *Comentarios*, `Cuotas préstamo: ID=valor;…`.
+
+  `/deshacer` toma el `MOV-` más reciente ordenando por ID, así que también deshace pagos hechos en el tablero.
+- `limpio()` de *Solicitudes*, que evita fórmulas y que "1/2" se vuelva fecha ↔ `limpio_()` de `Codigo.gs`.
 
 ## IA y cuotas
 Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Lite** de respaldo para audio e imagen, **Gemma 4 31B** de respaldo de texto (límite de **16K tokens por minuto**, el más ajustado). Groq Whisper como respaldo de audio.
