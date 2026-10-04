@@ -12,13 +12,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   /* Tokens: sala de control. Fondo carbón, un solo acento violeta-azul; brillo en vez de sombras.
-     Series de las gráficas: ingresos violeta #7084ff, gastos cian #3dd6f5 (se distinguen también por luminosidad). Rojo apagado solo para alertas. */
+     Series de las gráficas: ingresos violeta #7084ff, gastos coral #e66767 (eje azul-amarillo: se distinguen con daltonismo rojo-verde). Cuotas en morado #a066bd. */
   :root {
     color-scheme: dark;
     --fondo: #0e0e0e; --panel: #191919; --panel-2: #212121; --borde: rgba(255, 255, 255, 0.09); --borde-2: #414042; --fila: #2c2c2c; --campo: #58595b;
     --tinta: #ffffff; --tinta-2: #d1d3d4; --tenue: #a7a9ac;
     --azul: #405bff; --violeta: #7084ff; --cian: #3dd6f5; --degradado: linear-gradient(179deg, #405bff 1.06%, #7084ff 123.42%);
-    --s1: #7084ff; --s2: #3dd6f5; --rojo: #f06b7e; --aviso: #f5b8c2; --bien: #7084ff; --realce: rgba(112, 132, 255, 0.10);
+    --s1: #7084ff; --s2: #e66767; --s3: #a066bd; --rojo: #e66767; --aviso: #f5b8c2; --bien: #7084ff; --realce: rgba(112, 132, 255, 0.10);
     --brillo: 0 0 40px rgba(64, 91, 255, 0.25); --brillo-suave: 0 0 32px rgba(112, 132, 255, 0.16);
     --r-tarjeta: 30px; --r-campo: 10px; --r-pildora: 60px;
     --letra: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -254,7 +254,7 @@
     <div class="dos-col">
       <div>
         <h2>Te deben <span class="der num" id="d-total-deben"></span></h2>
-        <div class="leyenda"><span><i style="background:var(--s1)"></i>Suelto</span><span><i style="background:var(--s2)"></i>En cuotas</span></div>
+        <div class="leyenda"><span><i style="background:var(--s1)"></i>Suelto</span><span><i style="background:var(--s3)"></i>En cuotas</span></div>
         <div class="libro filas" id="d-deben"></div>
         <h2>Próximas cuotas</h2>
         <div class="libro filas" id="d-cuotas"></div>
@@ -475,7 +475,7 @@
       const sub = [x.informal > 0 && x.dias !== null ? `suelto desde el ${fLarga(x.desde)}${x.dias >= 30 ? ` (${x.dias} días)` : ''}` : '', x.cuotas > 0 ? `${(x.detalle.prestamos.reduce((s, p) => s + p.cuotas.filter(q => !['Pagada', 'Anulada'].includes(q.estado)).length, 0))} cuotas pendientes` : ''].filter(Boolean).join(', ');
       const w = v => Math.max(0, Math.round(v * 100 / max));
       return `<button data-abrir="persona:${esc(x.nombre)}"><div class="avatar" aria-hidden="true">${inicial(x.nombre)}</div><div class="cuerpo"><div class="titulo">${x.dias >= 30 ? '⚠️ ' : ''}${esc(x.nombre)}</div><div class="tenue">${esc(sub)}</div>` +
-        `<div class="barra-dos" aria-hidden="true" style="width:${w(x.total)}%">${x.informal > 0 ? `<i style="flex:${x.informal};background:var(--s1)"></i>` : ''}${x.cuotas > 0 ? `<i style="flex:${x.cuotas};background:var(--s2)"></i>` : ''}</div></div><div class="monto num">${esc(pesos(x.total))}</div><span class="chevron" aria-hidden="true">›</span></button>`;
+        `<div class="barra-dos" aria-hidden="true" style="width:${w(x.total)}%">${x.informal > 0 ? `<i style="flex:${x.informal};background:var(--s1)"></i>` : ''}${x.cuotas > 0 ? `<i style="flex:${x.cuotas};background:var(--s3)"></i>` : ''}</div></div><div class="monto num">${esc(pesos(x.total))}</div><span class="chevron" aria-hidden="true">›</span></button>`;
     }).join('') : '<div class="vacio">Nadie te debe. Cuando prestes, díselo al bot: "le presté 50 mil a Juan".</div>';
     $('d-cuotas').innerHTML = D.cuotasProximas.length ? D.cuotasProximas.slice(0, 10).map(q => `<button data-abrir="persona:${esc(q.persona)}">${fechaChip(q.fecha)}<div class="cuerpo"><div class="titulo">${q.vencida ? '⚠️ ' : ''}${esc(q.persona)}</div><div class="tenue">cuota ${q.n} del préstamo ${esc(q.prestamo)}${q.vencida ? ', vencida' : ''}</div></div><div class="monto num">${esc(pesos(q.valor))}</div></button>`).join('')
       : '<div class="vacio">No hay cuotas por cobrar en los próximos 90 días.</div>';
@@ -526,7 +526,7 @@
     for (const p of det.prestamos) {
       const pag = p.cuotas.filter(q => q.estado === 'Pagada').length, n = p.cuotas.filter(q => q.estado !== 'Anulada').length;
       h += `<h4>Préstamo ${esc(p.id)}</h4><div class="libro" style="padding:12px 14px"><div>${esc(pesos(p.monto))} en ${n} cuotas de ${esc(pesos(p.valor))}${p.frecuencia ? ', ' + esc(p.frecuencia.toLowerCase()) : ''}</div>` +
-        `<div class="barra-una" style="margin-top:8px"><i style="width:${Math.round(pag * 100 / (n || 1))}%;background:var(--s2)"></i></div><div class="tenue">${pag} de ${n} cuotas pagadas</div>${p.notas ? `<div class="tenue">${esc(p.notas)}</div>` : ''}</div>` +
+        `<div class="barra-una" style="margin-top:8px"><i style="width:${Math.round(pag * 100 / (n || 1))}%;background:var(--s3)"></i></div><div class="tenue">${pag} de ${n} cuotas pagadas</div>${p.notas ? `<div class="tenue">${esc(p.notas)}</div>` : ''}</div>` +
         `<div class="libro filas" style="margin-top:8px">` + p.cuotas.filter(q => q.estado !== 'Anulada').map(q => fila(q.fecha, `Cuota ${q.n}`,
           q.estado === 'Pagada' ? '✓ pagada' : q.recibido > 0 ? `abonó ${esc(pesos(q.recibido))}, faltan ${esc(pesos(q.valor - q.recibido))}` : q.vencida ? '⚠️ vencida' : 'pendiente', esc(pesos(q.valor)), q.estado === 'Pagada' ? 'tachado' : '')).join('') + '</div>';
     }

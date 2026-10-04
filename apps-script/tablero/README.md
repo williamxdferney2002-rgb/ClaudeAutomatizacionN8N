@@ -45,7 +45,7 @@ Solo modo oscuro: fondo carbón `#0e0e0e`, paneles `#191919` con borde fino y un
 - **Portada:** el patrimonio como titular grande con brillo detrás; debajo, en violeta, cuánto cambió desde la última foto.
 - **Menú:** píldora flotante (abajo en el celular, arriba al centro en el PC); la pestaña activa lleva un punto azul.
 - **Letras:** *Inter* para el texto y *JetBrains Mono* para montos, fechas y códigos (Google Fonts; si no cargan, usa las del sistema).
-- **Colores de dinero:** ingresos y entradas en violeta `#7084ff`, gastos en cian `#3dd6f5` (se distinguen también por luminosidad, apto para daltonismo); rojo apagado `#f06b7e` solo para alertas (mes en negativo, presupuesto pasado, sin conexión). Las pérdidas se marcan con ▼ en gris.
+- **Colores de dinero:** ingresos y entradas en violeta `#7084ff`; gastos en coral `#e66767`, que también marca las alertas (mes en negativo, presupuesto pasado, sin conexión); cuotas de préstamos en morado `#a066bd`. Validados para daltonismo. Las pérdidas se marcan con ▼ en gris.
 
 ## Cómo se probó (fuera de Google)
 - `calcular()` con los datos reales del Excel del 3-oct convertidos al formato de `getValues()` (fechas como `Date`): las cifras coinciden con el bot y el resumen semanal (Nequi $720.000, disponible $3.685.100, inversiones $1.056.660, te deben $1.590.600, patrimonio $2.331.112, CDT $1.144.214, mínimo RappiCard $2.886.835) → 17/17.
