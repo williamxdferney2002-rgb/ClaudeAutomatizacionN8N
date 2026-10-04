@@ -28,7 +28,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 - `docs/` → documentación de referencia (infraestructura, IDs, arquitectura, pendientes, lecciones).
 - `.claude/rules/` → convenciones que se cargan al editar `flujos/**/*.json`.
 - `apps-script/tablero/` → app web en vivo (Apps Script, solo lectura) sobre la hoja de Finanzas: resumen, gastos, movimientos, deudas, cuentas e inversiones. Repite el cálculo de saldos y deudas de *Contexto/Reporte*: si cambia esa lógica en el bot, actualízala también en `Codigo.gs`. Instalación: [apps-script/tablero/README.md](apps-script/tablero/README.md).
-- `.agents/skills/` → skills instaladas con `npx skills add` (enlazadas en `.claude/skills/`), p. ej. `google-apps-script`.
+- `.agents/skills/` → skills instaladas con `npx skills add` (enlazadas en `.claude/skills/`), `google-apps-script`, `frontend-design`, `webapp-testing` y `theme-factory` (las tres últimas, oficiales de Anthropic).
 - Inventario de flujos y cómo exportar/importar: [flujos/README.md](flujos/README.md).
 
 ## Flujos y versiones actuales
