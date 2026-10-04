@@ -4,7 +4,7 @@ App web en vivo sobre la hoja *FinanzasWilliam*. **Solo lee** la hoja: no escrib
 
 | Pestaña | Qué muestra |
 |---|---|
-| Inicio | El patrimonio neto como un billete (y cuánto cambió desde la última foto de *Historial*); disponible, inversiones, te deben y tú debes (tocar cada uno lleva a su sección); lo que viene (pago de la tarjeta y cuotas por cobrar); patrimonio semana a semana y gasto por mes (tocar un mes abre sus gastos) |
+| Inicio | El patrimonio neto como titular grande (y cuánto cambió desde la última foto de *Historial*); disponible, inversiones, te deben y tú debes (tocar cada uno lleva a su sección); lo que viene (pago de la tarjeta y cuotas por cobrar); patrimonio semana a semana y gasto por mes (tocar un mes abre sus gastos) |
 | Gastos | Meses como botones; gastaste, entró y te quedó; gastos por categoría (tocar una lleva a sus movimientos) y presupuesto |
 | Ingresos | Por mes: entró, promedio mensual y cambio contra el mes anterior; de dónde vino (por categoría, tocar abre esos movimientos); otras entradas que no son ingreso (abonos, cuotas cobradas, préstamos recibidos); ingresos contra gastos de los últimos 6 meses; lista de ingresos del mes |
 | Movimientos | Agrupados por día, con búsqueda y filtros (tipo, cuenta, persona, categoría, fechas) que se quitan uno por uno; tocar un movimiento muestra su detalle |
@@ -40,12 +40,16 @@ Pegue los archivos nuevos → **Guardar** → **Implementar → Administrar impl
 - Permisos que pide: leer esta hoja y mostrar el menú. Además de la hoja, solo carga la librería de gráficas (Chart.js desde cdnjs) y la tipografía (Google Fonts).
 - Todo el texto de la hoja se muestra escapado (un `<script>` en un detalle se ve como texto, no se ejecuta).
 
-## Diseño (v2, 4-oct)
-Identidad del billete colombiano: el patrimonio es un billete verde con guilloché; el resto, sobrio como un libro de cuentas sobre papel de seguridad. Tipografía *Schibsted Grotesk* (Google Fonts; si no carga, usa la del sistema). Colores de las gráficas validados para daltonismo en modo claro y oscuro (verde $100.000 `#0b7a49` / morado $50.000 `#8a4fa0`).
+## Diseño (v4, 4-oct): sala de control
+Solo modo oscuro: fondo carbón `#0e0e0e`, paneles `#191919` con borde fino y un único acento violeta-azul (`#405bff → #7084ff`); el relieve se marca con brillo, no con sombras. Esquinas tipo píldora (30 px en tarjetas, 60 px en el menú).
+- **Portada:** el patrimonio como titular grande con brillo detrás; debajo, en violeta, cuánto cambió desde la última foto.
+- **Menú:** píldora flotante (abajo en el celular, arriba al centro en el PC); la pestaña activa lleva un punto azul.
+- **Letras:** *Inter* para el texto y *JetBrains Mono* para montos, fechas y códigos (Google Fonts; si no cargan, usa las del sistema).
+- **Colores de dinero:** ingresos y entradas en violeta `#7084ff`, gastos en cian `#3dd6f5` (se distinguen también por luminosidad, apto para daltonismo); rojo apagado `#f06b7e` solo para alertas (mes en negativo, presupuesto pasado, sin conexión). Las pérdidas se marcan con ▼ en gris.
 
 ## Cómo se probó (fuera de Google)
 - `calcular()` con los datos reales del Excel del 3-oct convertidos al formato de `getValues()` (fechas como `Date`): las cifras coinciden con el bot y el resumen semanal (Nequi $720.000, disponible $3.685.100, inversiones $1.056.660, te deben $1.590.600, patrimonio $2.331.112, CDT $1.144.214, mínimo RappiCard $2.886.835) → 17/17.
-- `Index.html` en Chromium con `google.script.run` simulado: celular (390 px, modo claro) y PC (1366 px, modo oscuro), las 6 pestañas y 23 comprobaciones de interacción (hoja de Papá y de Doña Sandra, tarjeta, desplegar Rappi Ahorros, categoría → movimientos, Esc cierra, texto con HTML escapado), sin errores de JavaScript ni desbordes.
+- `Index.html` en Chromium con `google.script.run` simulado: celular (390 px) y PC (1366 px), las 6 pestañas y 23 comprobaciones de interacción (hoja de Papá y de Doña Sandra, tarjeta, desplegar Rappi Ahorros, categoría → movimientos, Esc cierra, texto con HTML escapado), sin errores de JavaScript ni desbordes.
 - **No probado dentro de Google:** la implementación como app web, la autorización, `Utilities.formatDate` y el menú de la hoja.
 
 > Mientras no corrija en la hoja las cuotas PR-02-4 y PR-02-5 (ver `docs/pendientes.md`), el tablero, igual que el bot, mostrará a Doña Sandra debiendo $274.200 en cuotas en vez de $514.200.

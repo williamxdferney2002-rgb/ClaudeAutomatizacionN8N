@@ -4,162 +4,181 @@
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0e">
 <title>Mis finanzas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  /* Tokens: papel de seguridad + tinta verde de billete. Series validadas para daltonismo (verde $100.000 / morado $50.000). */
+  /* Tokens: sala de control. Fondo carbón, un solo acento violeta-azul; brillo en vez de sombras.
+     Series de las gráficas: ingresos violeta #7084ff, gastos cian #3dd6f5 (se distinguen también por luminosidad). Rojo apagado solo para alertas. */
   :root {
-    color-scheme: light;
-    --papel: #edf1ee; --sup: #fbfcfa; --tinta: #14261e; --tinta-2: #4a5a52; --tenue: #74827b; --linea: #dce3de; --linea-2: #c9d3cd;
-    --s1: #0b7a49; --s2: #8a4fa0; --rojo: #b3392f; --bien: #0b6b3f; --aviso: #8a5a00; --realce: #e3eee7;
-    --billete-a: #0f4a31; --billete-b: #1a6a45; --billete-tinta: #eaf5ee; --billete-guilloche: rgba(234, 245, 238, 0.10);
-    --r-grande: 18px; --r: 12px; --r-chico: 8px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --papel: #0e1512; --sup: #16201b; --tinta: #e8efea; --tinta-2: #b5c2ba; --tenue: #84928a; --linea: #26332c; --linea-2: #33423a;
-      --s1: #2a9a63; --s2: #a066bd; --rojo: #e66767; --bien: #3cc47f; --aviso: #f0b443; --realce: #1d2c25;
-      --billete-a: #0b3a26; --billete-b: #135437; --billete-guilloche: rgba(234, 245, 238, 0.08);
-    }
-  }
-  :root[data-theme="dark"] {
     color-scheme: dark;
-    --papel: #0e1512; --sup: #16201b; --tinta: #e8efea; --tinta-2: #b5c2ba; --tenue: #84928a; --linea: #26332c; --linea-2: #33423a;
-    --s1: #2a9a63; --s2: #a066bd; --rojo: #e66767; --bien: #3cc47f; --aviso: #f0b443; --realce: #1d2c25;
-    --billete-a: #0b3a26; --billete-b: #135437; --billete-guilloche: rgba(234, 245, 238, 0.08);
+    --fondo: #0e0e0e; --panel: #191919; --panel-2: #212121; --borde: rgba(255, 255, 255, 0.09); --borde-2: #414042; --fila: #2c2c2c; --campo: #58595b;
+    --tinta: #ffffff; --tinta-2: #d1d3d4; --tenue: #a7a9ac;
+    --azul: #405bff; --violeta: #7084ff; --cian: #3dd6f5; --degradado: linear-gradient(179deg, #405bff 1.06%, #7084ff 123.42%);
+    --s1: #7084ff; --s2: #3dd6f5; --rojo: #f06b7e; --aviso: #f5b8c2; --bien: #7084ff; --realce: rgba(112, 132, 255, 0.10);
+    --brillo: 0 0 40px rgba(64, 91, 255, 0.25); --brillo-suave: 0 0 32px rgba(112, 132, 255, 0.16);
+    --r-tarjeta: 30px; --r-campo: 10px; --r-pildora: 60px;
+    --letra: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--papel); color: var(--tinta); font: 15px/1.45 "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  html { -webkit-text-size-adjust: 100%; background: var(--fondo); }
+  body { margin: 0; background: var(--fondo); color: var(--tinta); font: 15px/1.5 var(--letra); -webkit-font-smoothing: antialiased; }
   button, select, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
-  :focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 6px; }
-  .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  :focus-visible { outline: 2px solid var(--violeta); outline-offset: 2px; border-radius: 12px; }
+  .libro :focus-visible { outline-offset: -3px; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.02em; }
   .tenue { color: var(--tenue); font-size: 13px; }
 
-  /* Estructura: barra de pestañas abajo en el celular (al alcance del pulgar), riel a la izquierda en pantalla grande */
-  header.top { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; max-width: 1080px; margin: 0 auto; }
-  header.top h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; flex: 1; }
-  .estado { font-size: 12px; color: var(--tenue); text-align: right; }
-  .btn-ico { border: 1px solid var(--linea-2); background: var(--sup); border-radius: 999px; width: 38px; height: 38px; display: grid; place-items: center; font-size: 17px; }
-  main { max-width: 1080px; margin: 0 auto; padding: 8px 16px calc(96px + env(safe-area-inset-bottom)); }
-  section[hidden] { display: none; }
-  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(6, 1fr);
-    background: var(--sup); border-top: 1px solid var(--linea); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
-  nav.tabs button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; font-size: 10.5px; letter-spacing: -0.01em; min-width: 0; color: var(--tenue); border-radius: 10px; }
-  nav.tabs svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  nav.tabs button[aria-selected="true"] { color: var(--s1); font-weight: 700; }
+  /* Encabezado: nombre, señal de "en vivo" y botón de actualizar */
+  header.top { display: flex; align-items: center; gap: 12px; padding: 18px 16px 4px; max-width: 1200px; margin: 0 auto; }
+  header.top h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; flex: 1; }
+  .estado { display: flex; align-items: center; gap: 8px; font: 12px/1.3 var(--mono); color: var(--tenue); text-align: right; }
+  .senal { width: 8px; height: 8px; border-radius: 50%; background: var(--campo); flex: none; }
+  .senal.vivo { background: var(--violeta); box-shadow: 0 0 10px 2px rgba(112, 132, 255, 0.7); }
+  .senal.caida { background: var(--rojo); }
+  .btn-ico { border: 1px solid var(--borde); background: var(--panel); border-radius: 50%; width: 40px; height: 40px; display: grid; place-items: center; font-size: 17px; color: var(--tinta-2); flex: none; }
+  .btn-ico:hover { border-color: var(--violeta); color: var(--tinta); }
+  main { max-width: 1200px; margin: 0 auto; padding: 4px 16px calc(112px + env(safe-area-inset-bottom)); }
+
+  /* Menú: píldora flotante abajo en el celular, arriba al centro en pantalla grande */
+  nav.tabs { position: fixed; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 20; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+    background: rgba(25, 25, 25, 0.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid var(--borde); border-radius: var(--r-pildora); padding: 6px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45); }
+  nav.tabs button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0 6px; font-size: 10px; letter-spacing: -0.02em; min-width: 0; color: var(--tenue); border-radius: var(--r-pildora); }
+  nav.tabs svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  nav.tabs button[aria-selected="true"] { color: var(--tinta); background: var(--realce); }
+  nav.tabs button[aria-selected="true"] svg { stroke: var(--violeta); }
   @media (min-width: 960px) {
-    nav.tabs { top: 0; bottom: 0; right: auto; width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 76px 12px 12px; border-top: 0; border-right: 1px solid var(--linea); }
-    nav.tabs button { flex-direction: row; gap: 10px; font-size: 15px; padding: 10px 12px; justify-content: flex-start; }
-    nav.tabs button[aria-selected="true"] { background: var(--realce); }
-    header.top, main { margin-left: max(216px, calc((100vw - 1080px) / 2 + 100px)); }
-    main { padding-bottom: 40px; }
+    nav.tabs { left: 50%; right: auto; bottom: auto; top: 16px; transform: translateX(-50%); display: flex; gap: 2px; padding: 6px; }
+    nav.tabs button { flex-direction: row; gap: 9px; font-size: 14px; letter-spacing: 0; padding: 9px 18px; }
+    nav.tabs svg { width: 17px; height: 17px; }
+    nav.tabs button[aria-selected="true"] { background: none; }
+    nav.tabs button[aria-selected="true"]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--azul); box-shadow: 0 0 8px var(--azul); margin-right: -2px; }
+    nav.tabs button[aria-selected="true"] svg { display: none; }
+    nav.tabs button:hover { color: var(--tinta); }
+    header.top { padding: 100px 24px 4px; }
+    main { padding: 4px 24px 64px; }
   }
 
-  /* El billete: el único elemento audaz */
-  .billete { position: relative; overflow: hidden; border-radius: var(--r-grande); padding: 20px 22px 18px; color: var(--billete-tinta);
-    background:
-      repeating-radial-gradient(circle at 88% 30%, var(--billete-guilloche) 0 1px, transparent 1px 7px),
-      repeating-radial-gradient(circle at 8% 120%, var(--billete-guilloche) 0 1px, transparent 1px 9px),
-      linear-gradient(135deg, var(--billete-a), var(--billete-b)); }
-  .billete::after { content: "$"; position: absolute; right: 16px; bottom: -30px; font-size: 150px; font-weight: 800; line-height: 1; opacity: 0.09; pointer-events: none; }
-  .billete .rotulo { font-size: 14px; opacity: 0.85; }
-  .billete .cifra { font-size: clamp(38px, 11vw, 56px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; margin: 2px 0 8px; }
-  .billete .cambio { font-size: 14px; }
-  .billete .serial { margin-top: 14px; font-size: 12px; opacity: 0.7; letter-spacing: 0.02em; }
+  /* Portada: el patrimonio como titular, con el brillo del acento detrás */
+  .portada { position: relative; text-align: center; padding: 44px 8px 40px; margin: 0 -16px; isolation: isolate; }
+  .portada::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(55% 60% at 50% 42%, rgba(64, 91, 255, 0.30), transparent 70%), radial-gradient(30% 35% at 70% 70%, rgba(61, 214, 245, 0.10), transparent 70%); }
+  .portada .rotulo { font-size: 15px; color: var(--tinta-2); }
+  .portada .cifra { font-family: var(--letra); font-size: clamp(46px, 13vw, 100px); font-weight: 500; letter-spacing: -0.045em; line-height: 1; margin: 10px 0 12px; }
+  .portada .cambio { font-size: clamp(17px, 4.6vw, 24px); font-weight: 500; letter-spacing: -0.02em; line-height: 1.09; background: var(--degradado); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .portada .serial { margin-top: 16px; font: 12px/1.5 var(--mono); color: var(--tenue); }
+  @media (min-width: 960px) { .portada { margin: 0; padding: 56px 8px 52px; } }
 
-  /* Libro: filas y celdas con divisiones finas en vez de muchas tarjetas iguales */
-  .libro { background: var(--sup); border: 1px solid var(--linea); border-radius: var(--r); }
-  .cuadro { display: grid; grid-template-columns: 1fr 1fr; margin-top: 12px; }
-  .cuadro > button { text-align: left; border: 0; background: none; padding: 14px 16px; border-bottom: 1px solid var(--linea); }
-  .cuadro > button:nth-child(odd) { border-right: 1px solid var(--linea); }
-  .cuadro > button:nth-last-child(-n+2) { border-bottom: 0; }
+  /* Paneles */
+  .libro { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r-tarjeta); overflow: hidden; }
+  .cuadro.libro { background: none; border: 0; border-radius: 0; overflow: visible; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+  .cuadro > button { text-align: left; border: 1px solid var(--borde); background: var(--panel); border-radius: 24px; padding: 18px 18px 16px; min-width: 0; transition: border-color 0.15s, box-shadow 0.15s; }
+  .cuadro > button:hover { border-color: rgba(112, 132, 255, 0.55); box-shadow: var(--brillo-suave); }
   .cuadro .k { font-size: 13px; color: var(--tinta-2); }
-  .cuadro .v { font-size: clamp(17px, 5vw, 20px); font-weight: 700; margin-top: 2px; }
+  .cuadro .v { font-size: clamp(16px, 4.6vw, 22px); font-weight: 500; margin: 6px 0 2px; }
   .cuadro .n { font-size: 12px; color: var(--tenue); }
-  h2 { font-size: 17px; font-weight: 700; margin: 26px 2px 10px; display: flex; align-items: baseline; gap: 10px; }
-  h2 .der { margin-left: auto; font-size: 14px; font-weight: 600; color: var(--tinta-2); }
-  .filas > * { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 0; border-bottom: 1px solid var(--linea); background: none; text-align: left; }
+  @media (min-width: 960px) { #i-cuadro { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } .cuadro > button { padding: 24px; } }
+  h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.015em; margin: 36px 4px 12px; display: flex; align-items: baseline; gap: 10px; }
+  h2 .der { margin-left: auto; font-size: 14px; font-weight: 500; color: var(--violeta); }
+  .pista { color: var(--tenue); font-size: 13px; margin: -6px 4px 10px; }
+  .filas > * { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 20px; border: 0; border-bottom: 1px solid var(--fila); background: none; text-align: left; }
   .filas > *:last-child { border-bottom: 0; }
   .filas > button:hover { background: var(--realce); }
   .filas .cuerpo { flex: 1; min-width: 0; }
-  .filas .titulo { font-weight: 600; overflow-wrap: anywhere; }
-  .filas .monto { font-weight: 700; text-align: right; }
-  .fecha-chip { min-width: 46px; text-align: center; line-height: 1.1; color: var(--tinta-2); font-size: 12px; }
-  .fecha-chip b { display: block; font-size: 18px; color: var(--tinta); }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--realce); color: var(--s1); flex: none; }
-  .barra-dos { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 6px; background: var(--linea); gap: 2px; }
+  .filas .titulo { font-weight: 500; overflow-wrap: anywhere; }
+  .filas .monto { font-weight: 500; text-align: right; }
+  .fecha-chip { min-width: 44px; text-align: center; line-height: 1.15; color: var(--tenue); font-size: 12px; }
+  .fecha-chip b { display: block; font: 500 19px/1.1 var(--mono); color: var(--tinta); }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; background: var(--realce); color: var(--violeta); border: 1px solid rgba(112, 132, 255, 0.35); flex: none; }
+  .barra-dos { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; background: var(--fila); gap: 2px; }
   .barra-dos > i { display: block; height: 100%; }
-  .barra-una { height: 6px; border-radius: 3px; background: var(--linea); overflow: hidden; margin-top: 6px; }
+  .barra-una { height: 6px; border-radius: 3px; background: var(--fila); overflow: hidden; margin-top: 8px; }
   .barra-una > i { display: block; height: 100%; background: var(--s1); border-radius: 3px; }
-  .leyenda { display: flex; gap: 14px; font-size: 12px; color: var(--tinta-2); margin: -4px 2px 8px; }
-  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  .chevron { transition: transform 0.18s ease; color: var(--tenue); flex: none; }
-  [aria-expanded="true"] .chevron { transform: rotate(90deg); }
-  .filas > .hijos { display: block; padding: 0; background: var(--papel); }
-  .hijos > * { padding-left: 30px; }
-  .graf { padding: 12px 10px 6px; }
+  .barra-una.gasto > i { background: var(--s2); }
+  .leyenda { display: flex; gap: 16px; font-size: 12px; color: var(--tinta-2); margin: -4px 4px 10px; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .chevron { transition: transform 0.18s ease; color: var(--tenue); flex: none; font-size: 18px; }
+  [aria-expanded="true"] .chevron { transform: rotate(90deg); color: var(--violeta); }
+  .filas > .hijos { display: block; padding: 0; background: #141414; border-bottom: 1px solid var(--fila); }
+  .hijos > * { padding-left: 38px; }
+  .graf { padding: 18px 14px 10px; }
   .graf .lienzo { position: relative; height: 230px; }
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
-  .chip { border: 1px solid var(--linea-2); background: var(--sup); border-radius: 999px; padding: 7px 14px; white-space: nowrap; font-size: 14px; }
-  .chip[aria-pressed="true"] { background: var(--tinta); color: var(--papel); border-color: var(--tinta); }
+
+  /* Meses: control segmentado en píldora; el activo lleva el punto azul */
+  .chips { display: flex; gap: 2px; overflow-x: auto; padding: 5px; margin-bottom: 14px; scrollbar-width: none; background: var(--panel); border: 1px solid var(--borde); border-radius: var(--r-pildora); }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { border: 0; background: none; border-radius: var(--r-pildora); padding: 8px 16px; white-space: nowrap; font-size: 14px; color: var(--tinta-2); display: flex; align-items: center; gap: 8px; }
+  .chip[aria-pressed="true"] { color: var(--tinta); background: var(--panel-2); }
+  .chip[aria-pressed="true"]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--azul); box-shadow: 0 0 8px var(--azul); }
   .tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .tres > div { padding: 12px 12px; border-right: 1px solid var(--linea); min-width: 0; }
+  .tres > div { padding: 16px 14px; border-right: 1px solid var(--fila); min-width: 0; }
+  .tres > div:first-child { padding-left: 20px; }
   .tres > div:last-child { border-right: 0; }
-  .tres .k { font-size: 12px; color: var(--tinta-2); } .tres .v { font-weight: 700; font-size: clamp(14px, 4.1vw, 17px); }
-  .busca { display: flex; gap: 8px; }
-  .busca input { flex: 1; min-width: 0; border: 1px solid var(--linea-2); border-radius: var(--r-chico); background: var(--sup); padding: 10px 12px; }
-  .filtros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
-  .filtros select, .filtros input { width: 100%; border: 1px solid var(--linea-2); border-radius: var(--r-chico); background: var(--sup); padding: 9px 10px; min-width: 0; }
-  .activos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .activos button { border: 0; background: var(--realce); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
-  .dia-titulo { padding: 8px 14px; font-size: 13px; font-weight: 700; color: var(--tinta-2); background: var(--papel); border-bottom: 1px solid var(--linea); }
-  details.mov { border-bottom: 1px solid var(--linea); }
-  details.mov summary { list-style: none; display: flex; gap: 12px; padding: 11px 14px; cursor: pointer; }
+  .tres .k { font-size: 12px; color: var(--tinta-2); } .tres .v { font-weight: 500; font-size: clamp(13px, 3.6vw, 18px); margin-top: 4px; }
+
+  /* Movimientos: buscador como consola con brillo, filtros y etiquetas */
+  .busca { display: flex; gap: 8px; border-radius: var(--r-campo); box-shadow: var(--brillo); }
+  .busca input { flex: 1; min-width: 0; border: 1px solid rgba(112, 132, 255, 0.35); border-radius: var(--r-campo); background: var(--panel); padding: 14px 16px; font-size: 15px; }
+  .busca input::placeholder { color: var(--campo); }
+  .busca input:focus { outline: none; border-color: var(--violeta); }
+  .filtros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+  .filtros select, .filtros input { width: 100%; border: 1px solid var(--campo); border-radius: var(--r-campo); background: var(--panel); padding: 10px 12px; min-width: 0; color: var(--tinta-2); }
+  .activos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .activos button { border: 1px solid var(--azul); background: rgba(64, 91, 255, 0.10); border-radius: 30px; padding: 5px 12px; font-size: 13px; color: var(--tinta); }
+  .dia-titulo { padding: 10px 20px; font: 12px/1.4 var(--mono); color: var(--tenue); background: #141414; border-bottom: 1px solid var(--fila); }
+  details.mov { border-bottom: 1px solid var(--fila); }
+  details.mov:last-child { border-bottom: 0; }
+  details.mov summary { list-style: none; display: flex; gap: 12px; padding: 13px 20px; cursor: pointer; }
+  details.mov summary:hover { background: var(--realce); }
   details.mov summary::-webkit-details-marker { display: none; }
-  details.mov .extra { padding: 0 14px 12px 14px; font-size: 13px; color: var(--tinta-2); display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
-  .signo-mas { color: var(--bien); } .signo-menos { color: var(--tinta); }
-  .vacio { padding: 22px 16px; text-align: center; color: var(--tenue); }
-  .mas { display: block; margin: 12px auto 0; border: 1px solid var(--linea-2); background: var(--sup); border-radius: 999px; padding: 8px 18px; }
-  .aviso-error { border: 1px solid var(--rojo); border-radius: var(--r); padding: 12px 14px; margin: 8px 0; }
-  .total-inv { padding: 16px; }
-  .total-inv .v { font-size: 30px; font-weight: 800; letter-spacing: -0.01em; }
-  .sube { color: var(--bien); } .baja { color: var(--rojo); }
-  .badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--linea-2); color: var(--tinta-2); white-space: nowrap; }
+  details.mov[open] summary { background: var(--realce); }
+  details.mov .extra { padding: 4px 20px 14px; font-size: 13px; color: var(--tinta-2); display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; background: var(--realce); }
+  details.mov .extra > span:nth-child(odd) { color: var(--tenue); }
+  .signo-mas { color: var(--violeta); } .signo-menos { color: var(--tinta); }
+  .vacio { padding: 26px 20px; text-align: center; color: var(--tenue); }
+  .mas { display: block; margin: 16px auto 0; border: 1px solid var(--violeta); background: transparent; color: var(--violeta); border-radius: 30px; padding: 10px 22px; font-weight: 500; }
+  .mas:hover { background: var(--realce); }
+  .aviso-error { border: 1px solid var(--rojo); border-radius: 20px; padding: 14px 18px; margin: 10px 0; color: var(--tinta-2); }
+  .total-inv { padding: 24px; position: relative; isolation: isolate; }
+  .total-inv::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(70% 90% at 0% 0%, rgba(64, 91, 255, 0.22), transparent 70%); }
+  .total-inv .v { font-family: var(--letra); font-size: clamp(34px, 9vw, 44px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.05; margin: 4px 0 8px; }
+  .sube { color: var(--violeta); } .baja { color: var(--tenue); } .alerta { color: var(--rojo); }
+  .badge { font-size: 12px; padding: 2px 10px; border-radius: 30px; border: 1px solid var(--azul); color: var(--tinta-2); white-space: nowrap; }
   .tachado .titulo, .tachado .monto { text-decoration: line-through; color: var(--tenue); }
-  .dos-col { display: grid; gap: 0 18px; }
+  .dos-col { display: grid; gap: 0 24px; }
   @media (min-width: 960px) { .dos-col { grid-template-columns: 1fr 1fr; align-items: start; } }
 
-  /* Hoja de detalle: sube desde abajo en el celular, panel a la derecha en pantalla grande */
-  dialog.hoja { border: 0; padding: 0; margin: auto 0 0; width: 100%; max-width: 100%; max-height: 88vh; border-radius: var(--r-grande) var(--r-grande) 0 0;
-    background: var(--papel); color: var(--tinta); box-shadow: 0 -8px 30px rgba(0,0,0,0.18); }
-  dialog.hoja::backdrop { background: rgba(10, 20, 15, 0.45); }
+  /* Hoja de detalle: sube desde abajo en el celular, panel flotante a la derecha en pantalla grande */
+  dialog.hoja { border: 1px solid rgba(112, 132, 255, 0.35); padding: 0; margin: auto 0 0; width: 100%; max-width: 100%; max-height: 88vh; border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0;
+    background: var(--panel); color: var(--tinta); box-shadow: var(--brillo); }
+  dialog.hoja::backdrop { background: rgba(5, 5, 8, 0.72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
   dialog.hoja[open] { animation: subir 0.22s ease-out; }
   @keyframes subir { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
   @media (min-width: 960px) {
-    dialog.hoja { margin: 0 0 0 auto; height: 100vh; max-height: 100vh; width: 460px; border-radius: 0; }
+    dialog.hoja { margin: 16px 16px 16px auto; height: calc(100vh - 32px); max-height: calc(100vh - 32px); width: 480px; border-radius: var(--r-tarjeta); }
     @keyframes subir { from { transform: translateX(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
   }
-  @media (prefers-reduced-motion: reduce) { dialog.hoja[open] { animation: none; } .chevron { transition: none; } }
-  .hoja-cab { position: sticky; top: 0; background: var(--papel); display: flex; align-items: flex-start; gap: 12px; padding: 16px 16px 10px; border-bottom: 1px solid var(--linea); z-index: 1; }
-  .hoja-cab h3 { margin: 0; font-size: 20px; font-weight: 800; }
+  @media (prefers-reduced-motion: reduce) { dialog.hoja[open] { animation: none; } .chevron, .cuadro > button { transition: none; } }
+  .hoja-cab { position: sticky; top: 0; background: var(--panel); display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 14px; border-bottom: 1px solid var(--fila); z-index: 1; }
+  .hoja-cab h3 { margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
   .hoja-cab .cerrar { margin-left: auto; }
-  .hoja-cuerpo { padding: 4px 16px 28px; overflow-y: auto; }
-  .hoja-cuerpo h4 { margin: 20px 2px 8px; font-size: 15px; }
-  .agarre { width: 40px; height: 4px; border-radius: 2px; background: var(--linea-2); margin: 8px auto 0; }
+  .hoja-cuerpo { padding: 4px 16px 32px; overflow-y: auto; }
+  .hoja-cuerpo h4 { margin: 24px 4px 10px; font-size: 16px; font-weight: 500; }
+  .hoja-cuerpo .libro { border-radius: 22px; background: var(--fondo); }
+  .hoja-cuerpo p.tenue { margin: 12px 4px; }
+  .agarre { width: 40px; height: 4px; border-radius: 2px; background: var(--borde-2); margin: 10px auto 0; }
   @media (min-width: 960px) { .agarre { display: none; } }
 </style>
 </head>
 <body>
 <header class="top">
   <h1>Mis finanzas</h1>
-  <div class="estado" id="estado" aria-live="polite">Cargando…</div>
+  <div class="estado"><span class="senal" id="senal" aria-hidden="true"></span><span id="estado" aria-live="polite">Cargando…</span></div>
   <button class="btn-ico" id="recargar" aria-label="Actualizar ahora" title="Actualizar ahora">↻</button>
 </header>
 
@@ -167,8 +186,8 @@
   <div id="mensaje"></div>
 
   <section id="inicio">
-    <div class="billete" aria-label="Patrimonio neto">
-      <div class="rotulo">Patrimonio neto</div>
+    <div class="portada" aria-label="Patrimonio neto">
+      <div class="rotulo">Tu patrimonio neto</div>
       <div class="cifra num" id="i-patrimonio">—</div>
       <div class="cambio" id="i-cambio"></div>
       <div class="serial" id="i-serial"></div>
@@ -179,7 +198,7 @@
       <div>
         <h2>Patrimonio semana a semana</h2>
         <div class="libro graf"><div class="lienzo"><canvas id="g-patrimonio" aria-label="Patrimonio neto semana a semana"></canvas></div><div class="tenue" id="i-nota-pat" style="padding:4px 6px"></div></div>
-        <h2>Gasto por mes</h2><div class="tenue" style="margin:-6px 2px 8px">Toca un mes para ver en qué se fue.</div>
+        <h2>Gasto por mes</h2><div class="pista">Toca un mes para ver en qué se fue.</div>
         <div class="libro graf"><div class="lienzo"><canvas id="g-gastomes" aria-label="Gasto total por mes"></canvas></div></div>
       </div>
     </div>
@@ -189,7 +208,7 @@
     <div class="chips" id="gs-meses" role="group" aria-label="Mes"></div>
     <div class="libro tres" id="gs-resumen"></div>
     <div class="dos-col">
-      <div><h2>Por categoría</h2><div class="tenue" style="margin:-6px 2px 8px">Toca una categoría para ver sus gastos.</div><div class="libro filas" id="gs-cats"></div></div>
+      <div><h2>Por categoría</h2><div class="pista">Toca una categoría para ver sus gastos.</div><div class="libro filas" id="gs-cats"></div></div>
       <div><h2>Presupuesto</h2><div class="libro filas" id="gs-pres"></div></div>
     </div>
   </section>
@@ -199,9 +218,9 @@
     <div class="libro tres" id="in-resumen"></div>
     <div class="dos-col">
       <div>
-        <h2>De dónde vino</h2><div class="tenue" style="margin:-6px 2px 8px">Toca una fuente para ver esos ingresos.</div>
+        <h2>De dónde vino</h2><div class="pista">Toca una fuente para ver esos ingresos.</div>
         <div class="libro filas" id="in-cats"></div>
-        <h2>Otras entradas</h2><div class="tenue" style="margin:-6px 2px 8px">Plata que te llegó pero no es ingreso: te devolvieron lo que prestaste o te prestaron.</div>
+        <h2>Otras entradas</h2><div class="pista">Plata que te llegó pero no es ingreso: te devolvieron lo que prestaste o te prestaron.</div>
         <div class="libro filas" id="in-otras"></div>
       </div>
       <div>
@@ -278,7 +297,7 @@
 (function () {
   'use strict';
   const REFRESCO_MS = 5 * 60 * 1000;
-  const FUENTE = '"Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif';
+  const FUENTE = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
   let D = null, cargando = false, movVisibles = 60, mesGastos = null;
   const charts = {}, abiertas = new Set();
   const $ = id => document.getElementById(id);
@@ -303,8 +322,8 @@
   // ---------- Datos ----------
   function cargar() {
     if (cargando) return; cargando = true; $('estado').textContent = 'Actualizando…';
-    const ok = d => { cargando = false; D = d; $('mensaje').innerHTML = ''; $('estado').innerHTML = `Al día<br>${esc(d.generado.slice(11))}`; pintar(); };
-    const mal = e => { cargando = false; $('estado').textContent = 'Sin conexión';
+    const ok = d => { cargando = false; D = d; $('mensaje').innerHTML = ''; $('estado').textContent = `al día ${d.generado.slice(11)}`; $('senal').className = 'senal vivo'; pintar(); };
+    const mal = e => { cargando = false; $('estado').textContent = 'sin conexión'; $('senal').className = 'senal caida';
       $('mensaje').innerHTML = `<div class="aviso-error">No pude leer la hoja (${esc(e && e.message || e)}). Revisa tu conexión y toca ↻.</div>`; };
     if (window.google && google.script && google.script.run) google.script.run.withSuccessHandler(ok).withFailureHandler(mal).getDatos();
     else mal('esta página se abre desde Apps Script');
@@ -326,11 +345,13 @@
   }
 
   // ---------- Gráficas ----------
+  const TOOLTIP = { backgroundColor: '#0e0e0e', borderColor: 'rgba(112, 132, 255, 0.5)', borderWidth: 1, cornerRadius: 10, padding: 10, titleColor: '#d1d3d4', bodyColor: '#ffffff',
+    bodyFont: { family: FUENTE }, titleFont: { family: '"Inter", system-ui, sans-serif', weight: '500' }, callbacks: { label: c => ' ' + pesos(c.parsed.y) } };
   function base(extra) {
-    const linea = css('--linea'), tenue = css('--tenue');
+    const linea = 'rgba(255, 255, 255, 0.06)', tenue = css('--tenue');
     return Object.assign({ responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + pesos(c.parsed.y) } } },
-      scales: { x: { grid: { display: false }, border: { color: css('--linea-2') }, ticks: { color: tenue, font: { size: 11, family: FUENTE } } },
+      plugins: { legend: { display: false }, tooltip: TOOLTIP },
+      scales: { x: { grid: { display: false }, border: { color: css('--borde-2') }, ticks: { color: tenue, font: { size: 11, family: FUENTE } } },
         y: { grid: { color: linea, drawTicks: false }, border: { display: false }, ticks: { color: tenue, font: { size: 11, family: FUENTE }, maxTicksLimit: 5, callback: eje } } } }, extra || {});
   }
   function grafica(id, config) { if (!window.Chart) return; if (charts[id]) charts[id].destroy(); charts[id] = new Chart($(id), config); }
@@ -358,9 +379,9 @@
       : '<div class="vacio">Nada pendiente por ahora.</div>';
     const serie = [...h.slice(-25), { fecha: D.hoy, patrimonio: k.patrimonio }];
     $('i-nota-pat').textContent = serie.length < 3 ? 'Cada domingo se guarda una foto en la pestaña Historial; la línea crece con ellas.' : '';
-    grafica('g-patrimonio', { type: 'line', data: { labels: serie.map(x => fCorta(x.fecha)), datasets: [{ data: serie.map(x => x.patrimonio), borderColor: css('--s1'), backgroundColor: css('--s1'), borderWidth: 2, pointRadius: 4, pointHoverRadius: 7, tension: 0.25 }] }, options: base() });
+    grafica('g-patrimonio', { type: 'line', data: { labels: serie.map(x => fCorta(x.fecha)), datasets: [{ data: serie.map(x => x.patrimonio), borderColor: css('--s1'), backgroundColor: 'rgba(112, 132, 255, 0.12)', fill: true, pointBackgroundColor: css('--s1'), borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.3 }] }, options: base() });
     const meses = Object.keys(D.gastosMes).sort().slice(-6);
-    grafica('g-gastomes', { type: 'bar', data: { labels: meses.map(mesCorto), datasets: [{ data: meses.map(m => Object.values(D.gastosMes[m]).reduce((s, v) => s + v, 0)), backgroundColor: css('--s1'), borderRadius: 4, maxBarThickness: 40 }] },
+    grafica('g-gastomes', { type: 'bar', data: { labels: meses.map(mesCorto), datasets: [{ data: meses.map(m => Object.values(D.gastosMes[m]).reduce((s, v) => s + v, 0)), backgroundColor: css('--s2'), borderRadius: 8, maxBarThickness: 40 }] },
       options: base({ onClick: (e, els) => { if (els.length) { mesGastos = meses[els[0].index]; pintarGastos(); ir('gastos'); } }, onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; } }) });
   }
 
@@ -372,9 +393,9 @@
     const cats = Object.entries(D.gastosMes[mesGastos] || {}).sort((a, b) => b[1] - a[1]);
     const tot = cats.reduce((s, c) => s + c[1], 0), ing = D.ingresosMes[mesGastos] || 0, dif = ing - tot;
     $('gs-resumen').innerHTML = `<div><div class="k">Gastaste</div><div class="v num">${esc(pesos(tot))}</div></div><div><div class="k">Entró</div><div class="v num">${esc(pesos(ing))}</div></div>` +
-      `<div><div class="k">${dif >= 0 ? 'Te quedó' : 'Faltó'}</div><div class="v num ${dif >= 0 ? 'sube' : 'baja'}">${esc(pesos(Math.abs(dif)))}</div></div>`;
+      `<div><div class="k">${dif >= 0 ? 'Te quedó' : 'Faltó'}</div><div class="v num ${dif >= 0 ? 'sube' : 'alerta'}">${esc(pesos(Math.abs(dif)))}</div></div>`;
     const max = cats.length ? cats[0][1] : 1;
-    $('gs-cats').innerHTML = cats.length ? cats.map(([c, v]) => `<button data-cat="${esc(c)}"><div class="cuerpo"><div class="titulo">${esc(c)}</div><div class="barra-una"><i style="width:${Math.max(2, Math.round(v * 100 / max))}%"></i></div></div><div class="monto num">${esc(pesos(v))}<div class="tenue">${v * 100 / (tot || 1) < 1 ? 'menos de 1' : Math.round(v * 100 / (tot || 1))} %</div></div></button>`).join('')
+    $('gs-cats').innerHTML = cats.length ? cats.map(([c, v]) => `<button data-cat="${esc(c)}"><div class="cuerpo"><div class="titulo">${esc(c)}</div><div class="barra-una gasto"><i style="width:${Math.max(2, Math.round(v * 100 / max))}%"></i></div></div><div class="monto num">${esc(pesos(v))}<div class="tenue">${v * 100 / (tot || 1) < 1 ? 'menos de 1' : Math.round(v * 100 / (tot || 1))} %</div></div></button>`).join('')
       : `<div class="vacio">No hay gastos registrados en ${esc(nomMes(mesGastos))}.</div>`;
     const pres = D.presupuestos.filter(p => p.mes === mesGastos);
     $('gs-pres').innerHTML = pres.length ? pres.map(p => { const g = (D.gastosMes[mesGastos] || {})[p.categoria] || 0, r = p.monto ? g / p.monto : 0;
@@ -405,9 +426,9 @@
       : '<div class="vacio">Ninguna este mes.</div>';
     const serie = meses.slice(0, 6).reverse();
     grafica('g-ingresos', { type: 'bar', data: { labels: serie.map(mesCorto), datasets: [
-      { label: 'Ingresos', data: serie.map(m => (D.ingresosMes || {})[m] || 0), backgroundColor: css('--s1'), borderRadius: 4, maxBarThickness: 26 },
-      { label: 'Gastos', data: serie.map(m => Object.values(D.gastosMes[m] || {}).reduce((a, v) => a + v, 0)), backgroundColor: css('--s2'), borderRadius: 4, maxBarThickness: 26 }] },
-      options: base({ plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${pesos(c.parsed.y)}` } } },
+      { label: 'Ingresos', data: serie.map(m => (D.ingresosMes || {})[m] || 0), backgroundColor: css('--s1'), borderRadius: 6, maxBarThickness: 26 },
+      { label: 'Gastos', data: serie.map(m => Object.values(D.gastosMes[m] || {}).reduce((a, v) => a + v, 0)), backgroundColor: css('--s2'), borderRadius: 6, maxBarThickness: 26 }] },
+      options: base({ plugins: { legend: { display: false }, tooltip: Object.assign({}, TOOLTIP, { callbacks: { label: c => ` ${c.dataset.label}: ${pesos(c.parsed.y)}` } }) },
         onClick: (e, els) => { if (els.length) { mesGastos = serie[els[0].index]; pintarGastos(); pintarIngresos(); } }, onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; } }) });
     const lista = D.movimientos.filter(m => m.f.startsWith(mesGastos) && ['Ingreso', 'Venta reventa'].includes(m.t)).slice(0, 20);
     $('in-lista').innerHTML = lista.length ? lista.map(m => fila(m.f, esc(bonito(m.x) || m.t), esc(m.k || m.t) + (m.c ? ', a ' + esc(m.c) : ''), '+' + esc(pesos(m.m)))).join('')
@@ -435,8 +456,8 @@
     for (const m of lista.slice(0, movVisibles)) {
       if (m.f !== ultimo) { html += `<div class="dia-titulo">${esc(fLarga(m.f))}</div>`; ultimo = m.f; }
       const signo = m.s > 0 ? '+' : m.s < 0 ? '−' : '';
-      html += `<details class="mov"><summary><div class="cuerpo" style="flex:1;min-width:0"><div class="titulo" style="font-weight:600;overflow-wrap:anywhere">${esc(bonito(m.x) || m.t)}</div><div class="tenue">${esc(m.t)}${m.p ? ', ' + esc(m.p) : ''}</div></div>` +
-        `<div class="monto num ${m.s > 0 ? 'signo-mas' : 'signo-menos'}" style="font-weight:700">${signo}${esc(pesos(m.m).replace('-', ''))}</div></summary>` +
+      html += `<details class="mov"><summary><div class="cuerpo" style="flex:1;min-width:0"><div class="titulo" style="font-weight:500;overflow-wrap:anywhere">${esc(bonito(m.x) || m.t)}</div><div class="tenue">${esc(m.t)}${m.p ? ', ' + esc(m.p) : ''}</div></div>` +
+        `<div class="monto num ${m.s > 0 ? 'signo-mas' : 'signo-menos'}" style="font-weight:500">${signo}${esc(pesos(m.m).replace('-', ''))}</div></summary>` +
         `<div class="extra"><span>Cuenta</span><span>${esc(m.c || 'sin cuenta')}${m.d ? ' hacia ' + esc(m.d) : ''}</span>${m.k ? `<span>Categoría</span><span>${esc(m.k)}</span>` : ''}${m.p ? `<span>Persona</span><span>${esc(m.p)}</span>` : ''}<span>Fecha</span><span>${esc(fLarga(m.f))}</span></div></details>`;
     }
     $('m-lista').innerHTML = html || '<div class="vacio">Ningún movimiento coincide con esos filtros. Quita alguno para ver más.</div>';
@@ -459,7 +480,7 @@
     $('d-cuotas').innerHTML = D.cuotasProximas.length ? D.cuotasProximas.slice(0, 10).map(q => `<button data-abrir="persona:${esc(q.persona)}">${fechaChip(q.fecha)}<div class="cuerpo"><div class="titulo">${q.vencida ? '⚠️ ' : ''}${esc(q.persona)}</div><div class="tenue">cuota ${q.n} del préstamo ${esc(q.prestamo)}${q.vencida ? ', vencida' : ''}</div></div><div class="monto num">${esc(pesos(q.valor))}</div></button>`).join('')
       : '<div class="vacio">No hay cuotas por cobrar en los próximos 90 días.</div>';
     $('d-total-debo').textContent = pesos(k.deudaTarjetas + k.yoDebo);
-    const debo = [...D.tarjetas.filter(t => t.deuda > 0).map(t => `<button data-abrir="tarjeta:${esc(t.nombre)}"><div class="avatar" aria-hidden="true">💳</div><div class="cuerpo"><div class="titulo">${esc(t.nombre)}</div><div class="tenue">paga el ${esc(fLarga(t.prox))}, mínimo aproximado ${esc(pesos(t.minimo))}</div>${t.cupo ? `<div class="barra-una"><i style="width:${Math.min(100, Math.round(t.deuda * 100 / t.cupo))}%;background:var(--rojo)"></i></div><div class="tenue">usas ${Math.round(t.deuda * 100 / t.cupo)} % del cupo, libre ${esc(pesos(t.disponible))}</div>` : ''}</div><div class="monto num">${esc(pesos(t.deuda))}</div><span class="chevron" aria-hidden="true">›</span></button>`),
+    const debo = [...D.tarjetas.filter(t => t.deuda > 0).map(t => `<button data-abrir="tarjeta:${esc(t.nombre)}"><div class="avatar" aria-hidden="true">💳</div><div class="cuerpo"><div class="titulo">${esc(t.nombre)}</div><div class="tenue">paga el ${esc(fLarga(t.prox))}, mínimo aproximado ${esc(pesos(t.minimo))}</div>${t.cupo ? `<div class="barra-una"><i style="width:${Math.min(100, Math.round(t.deuda * 100 / t.cupo))}%"></i></div><div class="tenue">usas ${Math.round(t.deuda * 100 / t.cupo)} % del cupo, libre ${esc(pesos(t.disponible))}</div>` : ''}</div><div class="monto num">${esc(pesos(t.deuda))}</div><span class="chevron" aria-hidden="true">›</span></button>`),
       ...D.acreedores.map(a => `<button data-abrir="acreedor:${esc(a.nombre)}"><div class="avatar" aria-hidden="true">${inicial(a.nombre)}</div><div class="cuerpo"><div class="titulo">${esc(a.nombre)}</div><div class="tenue">le debes</div></div><div class="monto num">${esc(pesos(a.monto))}</div><span class="chevron" aria-hidden="true">›</span></button>`)];
     $('d-debo').innerHTML = debo.length ? debo.join('') : '<div class="vacio">No debes nada.</div>';
   }
@@ -565,7 +586,6 @@
   $('m-mas').addEventListener('click', () => { movVisibles += 120; pintarMovimientos(); });
   $('recargar').addEventListener('click', cargar);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) cargar(); });
-  if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pintar);
   try { const t = localStorage.getItem('tablero.tab'); if (t && $(t)) ir(t); } catch (e) {}
   setInterval(() => { if (!document.hidden) cargar(); }, REFRESCO_MS);
   cargar();
