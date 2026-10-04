@@ -6,6 +6,7 @@ App web en vivo sobre la hoja *FinanzasWilliam*. **Solo lee** la hoja: no escrib
 |---|---|
 | Inicio | El patrimonio neto como un billete (y cuánto cambió desde la última foto de *Historial*); disponible, inversiones, te deben y tú debes (tocar cada uno lleva a su sección); lo que viene (pago de la tarjeta y cuotas por cobrar); patrimonio semana a semana y gasto por mes (tocar un mes abre sus gastos) |
 | Gastos | Meses como botones; gastaste, entró y te quedó; gastos por categoría (tocar una lleva a sus movimientos) y presupuesto |
+| Ingresos | Por mes: entró, promedio mensual y cambio contra el mes anterior; de dónde vino (por categoría, tocar abre esos movimientos); otras entradas que no son ingreso (abonos, cuotas cobradas, préstamos recibidos); ingresos contra gastos de los últimos 6 meses; lista de ingresos del mes |
 | Movimientos | Agrupados por día, con búsqueda y filtros (tipo, cuenta, persona, categoría, fechas) que se quitan uno por uno; tocar un movimiento muestra su detalle |
 | Deudas | **Te deben**: cada persona con barra suelto/cuotas; al tocarla, una hoja con lo que te debe (y qué ya pagó), sus abonos, sus préstamos con cada cuota y los pagos de cuotas. **Tú debes**: la tarjeta con sus cuotas agrupadas por fecha de pago (explica el mínimo) y las personas a las que les debes |
 | Cuentas | Árbol de cuentas: las que tienen bolsillos se despliegan al tocarlas; tocar una cuenta abre sus últimos movimientos. Inversiones con total, ganancia y el peso de cada activo |
@@ -44,7 +45,7 @@ Identidad del billete colombiano: el patrimonio es un billete verde con guilloch
 
 ## Cómo se probó (fuera de Google)
 - `calcular()` con los datos reales del Excel del 3-oct convertidos al formato de `getValues()` (fechas como `Date`): las cifras coinciden con el bot y el resumen semanal (Nequi $720.000, disponible $3.685.100, inversiones $1.056.660, te deben $1.590.600, patrimonio $2.331.112, CDT $1.144.214, mínimo RappiCard $2.886.835) → 17/17.
-- `Index.html` en Chromium con `google.script.run` simulado: celular (390 px, modo claro) y PC (1366 px, modo oscuro), las 5 pestañas y 19 comprobaciones de interacción (hoja de Papá y de Doña Sandra, tarjeta, desplegar Rappi Ahorros, categoría → movimientos, Esc cierra, texto con HTML escapado), sin errores de JavaScript ni desbordes.
+- `Index.html` en Chromium con `google.script.run` simulado: celular (390 px, modo claro) y PC (1366 px, modo oscuro), las 6 pestañas y 23 comprobaciones de interacción (hoja de Papá y de Doña Sandra, tarjeta, desplegar Rappi Ahorros, categoría → movimientos, Esc cierra, texto con HTML escapado), sin errores de JavaScript ni desbordes.
 - **No probado dentro de Google:** la implementación como app web, la autorización, `Utilities.formatDate` y el menú de la hoja.
 
 > Mientras no corrija en la hoja las cuotas PR-02-4 y PR-02-5 (ver `docs/pendientes.md`), el tablero, igual que el bot, mostrará a Doña Sandra debiendo $274.200 en cuotas en vez de $514.200.

@@ -21,4 +21,5 @@
 | `/deshacer` de un cobro dejó cuotas pagadas | Solo se borraba el movimiento | Guardar `Cuotas préstamo: ID=valor` en *Comentarios* y revertir al deshacer (v10) |
 | "Papá → no te debe nada" | Se copió el comando con una flecha y el argumento no se limpiaba; una persona inexistente se reportaba como "no debe" | Limpiar el argumento de los comandos y decir "No encontré a X" (v11) |
 | Al corregir respondiendo: "quedaría en -$7.000" y, al tocar "Sí", "respóndeme directamente…" | El saldo contaba el movimiento que se iba a reemplazar, y el botón no trae el "responder a", así que se perdía la operación | Descontar la operación corregida del saldo y guardar `operacion` antes de preguntar (v12) |
+| "Debo 10k a Daniela de los postres" → "¿De dónde salió la plata?" | Todos los tipos suponían que la plata ya se movió | Deuda sin plata: Gasto + Préstamo recibido con `sin_cuenta` (no pide cuenta ni toca saldos); al pagar, Abono pagado (v15) |
 | Gemini 3.8 Flash al 20/20 | Límite de 20 al día | No usarlo en ningún flujo |

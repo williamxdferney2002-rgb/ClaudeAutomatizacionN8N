@@ -34,12 +34,12 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 ## Flujos y versiones actuales
 | Flujo | Versión | Nodos | Notas |
 |---|---|---|---|
-| Finanzas - Bot | **v14** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v14.json` (v13 + `/tablero`: envía el link del tablero guardado en *Parámetros* → `url_tablero`) |
+| Finanzas - Bot | **v15** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v15.json` (v14 + deuda sin plata: "le debo 10k a Daniela de los postres" → Gasto + Préstamo recibido sin cuenta) |
 | Finanzas - Programado | **v6** | 34 | `flujos/finanzas/finanzas-programado-v6.json`. Diario 7:00 (cuotas con botones de cuenta, recurrentes incompletas los domingos); resumen domingo 19:00 con saldos, inversiones, deudas; día 1 a las 8:00 |
 | Finanzas - Errores | v1 | 5 | `flujos/finanzas/finanzas-errores-v1.json`. Pendiente v2: Parse Mode HTML y escape en "Avisar error", anti-spam |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
 | Agente de Pagos (WhatsApp) | estable | — | Hoja "Registro Pagos"; error workflow `CiiO6RLWImqCMVJS` |
-| Tablero (Apps Script) | **v2** | — | `apps-script/tablero/` (4-oct). App web "Solo yo" sobre la hoja de Finanzas; detalle por deudor, tarjeta y cuenta; diseño "billete" |
+| Tablero (Apps Script) | **v3** | — | `apps-script/tablero/` (4-oct). App web "Solo yo" sobre la hoja de Finanzas; detalle por deudor, tarjeta y cuenta; pestaña Ingresos; diseño "billete" |
 
 Arquitectura del bot de finanzas, acciones, pestañas de la hoja y modelo de datos: [docs/finanzas-arquitectura.md](docs/finanzas-arquitectura.md).
 Asistente personal y bot de pagos: [docs/asistente-y-pagos.md](docs/asistente-y-pagos.md).
@@ -59,7 +59,7 @@ Detalle de convenciones de código para nodos Code y JSON: ver [.claude/rules/n8
 No hay build ni tests de n8n en el repo; la verificación es estática más la simulación de nodos Code. Luxon lo instala el hook `.claude/hooks/session-start.sh`.
 ```bash
 S=.claude/skills/n8n-workflow-check/scripts
-F=flujos/finanzas/finanzas-bot-v14.json
+F=flujos/finanzas/finanzas-bot-v15.json
 python3 $S/check_workflow.py $F --modo produccion            # revisión completa; "Resultado: N errores, M avisos"
 python3 $S/check_workflow.py nuevo.json --base $F            # versión nueva contra el export anterior (IDs, webhookId, credenciales)
 # el export anterior sale del historial: git show <commit>:flujos/finanzas/finanzas-bot-v9.json > /tmp/v9.json

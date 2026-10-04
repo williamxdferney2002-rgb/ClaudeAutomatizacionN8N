@@ -233,12 +233,18 @@ function calcular(T, ahora) {
 
   // Gastos e ingresos por mes y categoría (últimos meses)
   const desdeMes = (() => { const s = sumarMeses(ph.y, ph.m, -(MESES_HISTORIA - 1)); return s.y + '-' + String(s.m).padStart(2, '0'); })();
-  const gastosMes = {}, ingresosMes = {};
+  const gastosMes = {}, ingresosMes = {}, ingresosCat = {}, entradasMes = {};
   for (const r of movs) {
     if (isNaN(r._dia)) continue;
     const mes = mesDeDia(r._dia); if (mes < desdeMes) continue;
     if (r.Tipo === 'Gasto') { const c = r['Categoría'] || 'Sin categoría'; (gastosMes[mes] = gastosMes[mes] || {})[c] = (gastosMes[mes][c] || 0) + r._monto; }
-    if (['Ingreso', 'Venta reventa'].includes(r.Tipo)) ingresosMes[mes] = (ingresosMes[mes] || 0) + r._monto;
+    if (['Ingreso', 'Venta reventa'].includes(r.Tipo)) {
+      ingresosMes[mes] = (ingresosMes[mes] || 0) + r._monto;
+      const c = r.Tipo === 'Venta reventa' ? 'Ventas de reventa' : (r['Categoría'] || 'Sin categoría');
+      (ingresosCat[mes] = ingresosCat[mes] || {})[c] = (ingresosCat[mes][c] || 0) + r._monto;
+    }
+    // Plata que entró pero no es ingreso (le devolvieron o le prestaron); una deuda sin cuenta no movió plata
+    if (['Abono recibido', 'Cobro cuota', 'Préstamo recibido'].includes(r.Tipo) && r.Cuenta) (entradasMes[mes] = entradasMes[mes] || {})[r.Tipo] = ((entradasMes[mes] || {})[r.Tipo] || 0) + r._monto;
   }
   const presupuestos = T.presupuestos.filter(p => p['Categoría']).map(p => ({ mes: mesDe(p.Mes), categoria: p['Categoría'], monto: num(p.Monto) })).filter(p => p.mes >= desdeMes);
 
@@ -261,7 +267,7 @@ function calcular(T, ahora) {
     deudores: deudas.filter(d => d.total > 0).sort((a, b) => b.total - a.total),
     acreedores: deudas.filter(d => d.yoDebo > 0).map(d => ({ nombre: d.nombre, monto: d.yoDebo, recibidos: d.detalle.recibidos, pagados: d.detalle.pagados })).sort((a, b) => b.monto - a.monto),
     prestamos: resumenPrestamos, cuotasProximas,
-    gastosMes, ingresosMes, presupuestos, movimientos, historial
+    gastosMes, ingresosMes, ingresosCat, entradasMes, presupuestos, movimientos, historial
   };
 }
 
