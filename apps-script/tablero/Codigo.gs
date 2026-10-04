@@ -152,7 +152,9 @@ function calcular(T, ahora) {
     if (prox < hoy) { const s = sumarMeses(ph.y, ph.m, 1); prox = diaDe(s.y, s.m, d); }
     const pend = ctasT.filter(r => String(r.Cuenta) === c.id && !['Pagada', 'Anulada'].includes(r.Estado));
     const minimo = pend.filter(r => dia(r['Fecha de pago']) <= prox).reduce((s, r) => s + num(r['Valor cuota']), 0);
-    return { id: c.id, nombre: c.nombre, deuda: c.saldo || 0, cupo: c.cupo, disponible: c.cupo ? c.cupo - (c.saldo || 0) : null, prox: ymd(prox), minimo };
+    const cuotasPend = pend.filter(r => !isNaN(dia(r['Fecha de pago']))).sort((a, b) => dia(a['Fecha de pago']) - dia(b['Fecha de pago']))
+      .map(r => ({ fecha: ymd(dia(r['Fecha de pago'])), x: String(r.Comercio || 'Compra'), n: num(r['Nº']), de: num(r['Total cuotas']), valor: Math.round(num(r['Valor cuota'])), vencida: dia(r['Fecha de pago']) < hoy }));
+    return { id: c.id, nombre: c.nombre, deuda: c.saldo || 0, cupo: c.cupo, disponible: c.cupo ? c.cupo - (c.saldo || 0) : null, prox: ymd(prox), minimo, cuotasPend };
   });
 
   // Personas: deuda suelta (Préstamo dado sin PR- menos abonos) + cuotas de préstamos; y lo que él debe
@@ -172,8 +174,23 @@ function calcular(T, ahora) {
     let resto = abonos, desde = null;
     for (const r of dados) { if (resto >= r._monto - 0.5) { resto -= r._monto; continue; } desde = r._dia; break; }
     const p = personas.find(x => norm(x.Nombre) === norm(nombre)) || {};
+    // Detalle (v2): qué le debe (cubierto por abonos de lo más viejo a lo más nuevo), abonos, préstamos con cuotas y lo que él le debe
+    let cubre = abonos;
+    const items = dados.map(r => { const pag = Math.max(0, Math.min(cubre, r._monto)); cubre -= pag;
+      return { f: isNaN(r._dia) ? '' : ymd(r._dia), x: String(r.Detalle || r.Comercio || 'Préstamo'), m: Math.round(r._monto), c: cta(r.Cuenta).nombre || r.Cuenta || '', queda: Math.round(r._monto - pag),
+        estado: pag >= r._monto - 0.5 ? 'pagado' : pag > 0.5 ? 'parcial' : 'pendiente' }; });
+    const mv = r => ({ f: isNaN(r._dia) ? '' : ymd(r._dia), x: String(r.Detalle || r.Comercio || r.Tipo), m: Math.round(r._monto), c: cta(r.Cuenta).nombre || r.Cuenta || '' });
+    const loans = prestamos.filter(pr => norm(pr.Persona) === norm(nombre)).map(pr => {
+      const qs = cuotasP.filter(q => q['ID préstamo'] === pr.ID).sort((a, b) => num(a['Nº']) - num(b['Nº']));
+      return { id: pr.ID, monto: Math.round(num(pr['Monto prestado'])), valor: Math.round(num(pr['Valor cuota'])), frecuencia: pr.Frecuencia || '', notas: String(pr.Notas || ''),
+        cuotas: qs.map(q => ({ n: num(q['Nº']), fecha: isNaN(dia(q.Fecha)) ? '' : ymd(dia(q.Fecha)), valor: Math.round(num(q['Valor cuota'])), recibido: Math.round(num(q['Valor recibido'])),
+          estado: q.Estado || 'Pendiente', vencida: !['Pagada', 'Anulada'].includes(q.Estado) && dia(q.Fecha) < hoy })) };
+    });
+    const detalle = { items: items.reverse(), abonos: deP.filter(r => r.Tipo === 'Abono recibido').sort((a, b) => b._dia - a._dia).map(mv),
+      cobros: deP.filter(r => r.Tipo === 'Cobro cuota').sort((a, b) => b._dia - a._dia).map(mv), prestamos: loans,
+      recibidos: deP.filter(r => r.Tipo === 'Préstamo recibido').sort((a, b) => b._dia - a._dia).map(mv), pagados: deP.filter(r => r.Tipo === 'Abono pagado').sort((a, b) => b._dia - a._dia).map(mv) };
     return { nombre, relacion: p['Relación'] || '', informal: Math.round(informal), cuotas: Math.round(cuotas), total: Math.round(informal + cuotas), yoDebo: Math.round(yoDebo),
-      desde: informal > 0.5 && desde !== null && !isNaN(desde) ? ymd(desde) : '', dias: informal > 0.5 && desde !== null && !isNaN(desde) ? hoy - desde : null };
+      desde: informal > 0.5 && desde !== null && !isNaN(desde) ? ymd(desde) : '', dias: informal > 0.5 && desde !== null && !isNaN(desde) ? hoy - desde : null, detalle };
   });
 
   // Préstamos con cuotas y próximas cuotas por cobrar
@@ -239,10 +256,10 @@ function calcular(T, ahora) {
     generado: ahoraTxt, hoy: ymd(hoy), mesActual: mesDeDia(hoy), usdcop,
     kpis: { disponible: Math.round(disponible), cdt: Math.round(cdt), inversiones: Math.round(inv), meDeben: Math.round(meDeben), deudaTarjetas: Math.round(deudaT), yoDebo: Math.round(yoDebo), patrimonio: Math.round(patrimonio) },
     cuentas: cuentas.filter(c => c.activa && c.tipo !== 'Tarjeta de crédito' && c.tipo !== 'Inversión').map(c => ({ id: c.id, nombre: c.nombre, tipo: c.tipo, padre: c.padre, saldo: Math.round(c.saldo || 0), entidad: c.entidad, vence: c.vence })),
-    tarjetas: tarjetas.map(t => ({ nombre: t.nombre, deuda: Math.round(t.deuda), cupo: t.cupo, disponible: t.disponible === null ? null : Math.round(t.disponible), prox: t.prox, minimo: Math.round(t.minimo) })),
+    tarjetas: tarjetas.map(t => ({ nombre: t.nombre, deuda: Math.round(t.deuda), cupo: t.cupo, disponible: t.disponible === null ? null : Math.round(t.disponible), prox: t.prox, minimo: Math.round(t.minimo), cuotas: t.cuotasPend })),
     inversiones: inversiones.sort((a, b) => b.valor - a.valor),
     deudores: deudas.filter(d => d.total > 0).sort((a, b) => b.total - a.total),
-    acreedores: deudas.filter(d => d.yoDebo > 0).map(d => ({ nombre: d.nombre, monto: d.yoDebo })).sort((a, b) => b.monto - a.monto),
+    acreedores: deudas.filter(d => d.yoDebo > 0).map(d => ({ nombre: d.nombre, monto: d.yoDebo, recibidos: d.detalle.recibidos, pagados: d.detalle.pagados })).sort((a, b) => b.monto - a.monto),
     prestamos: resumenPrestamos, cuotasProximas,
     gastosMes, ingresosMes, presupuestos, movimientos, historial
   };
