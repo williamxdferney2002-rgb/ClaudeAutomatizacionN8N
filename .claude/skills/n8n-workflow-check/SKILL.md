@@ -60,6 +60,12 @@ python3 $S/mapa_flujo.py "Flujo.json" [--rutas] [--code]
 ```
 Muestra disparadores, cada Switch/IF con sus destinos (y salidas sin conectar), modelos de IA, lecturas/escrituras, nodos externos sin reintento ni `onError`, ramas de error sin conectar y nodos sueltos.
 
+## Si el cambio toca lógica que el tablero repite
+El tablero (`apps-script/tablero/Codigo.gs`) copia partes del bot. Si cambió alguna de estas, avise en la entrega que el tablero también debe cambiar (o cámbielo y pruébelo, ver skill `auditar-entrega` §2b):
+- saldos y deudas de *Contexto*/*Reporte* ↔ `calcular()`;
+- `cobrar_cuota` y `/deshacer` de *Ejecutar* ↔ `registrarPago` y `deshacerCambio`;
+- `limpio()` de *Solicitudes* ↔ `limpio_()`.
+
 ## Cómo reportarlo en la entrega
 
 ```
