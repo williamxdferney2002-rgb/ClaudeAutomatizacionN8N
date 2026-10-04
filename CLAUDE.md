@@ -27,7 +27,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 - `flujos/<agente>/` → exports JSON de n8n, nombrados `<agente>-<flujo>-v<N>.json` (minúsculas, sin espacios). Solo la **versión vigente**; las anteriores quedan en el historial de git.
 - `docs/` → documentación de referencia (infraestructura, IDs, arquitectura, pendientes, lecciones).
 - `.claude/rules/` → convenciones que se cargan al editar `flujos/**/*.json`.
-- `apps-script/tablero/` → app web en vivo (Apps Script, solo lectura) sobre la hoja de Finanzas: resumen, gastos, movimientos, deudas, cuentas e inversiones. Repite el cálculo de saldos y deudas de *Contexto/Reporte*: si cambia esa lógica en el bot, actualízala también en `Codigo.gs`. Instalación: [apps-script/tablero/README.md](apps-script/tablero/README.md).
+- `apps-script/tablero/` → app web en vivo (Apps Script) sobre la hoja de Finanzas: resumen, gastos, ingresos, movimientos, deudas, cuentas e inversiones. Desde la v5 escribe: corrige categoría y detalle, registra pagos con el mismo formato del bot (Origen `Tablero`) y los deshace. Repite el cálculo de saldos y deudas de *Contexto/Reporte*: si cambia esa lógica en el bot, actualízala también en `Codigo.gs`. Instalación: [apps-script/tablero/README.md](apps-script/tablero/README.md).
 - `.agents/skills/` → skills instaladas con `npx skills add` (enlazadas en `.claude/skills/`), `google-apps-script`, `frontend-design`, `webapp-testing` y `theme-factory` (las tres últimas, oficiales de Anthropic).
 - Inventario de flujos y cómo exportar/importar: [flujos/README.md](flujos/README.md).
 
@@ -39,7 +39,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 | Finanzas - Errores | v1 | 5 | `flujos/finanzas/finanzas-errores-v1.json`. Pendiente v2: Parse Mode HTML y escape en "Avisar error", anti-spam |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
 | Agente de Pagos (WhatsApp) | estable | — | Hoja "Registro Pagos"; error workflow `CiiO6RLWImqCMVJS` |
-| Tablero (Apps Script) | **v4** | — | `apps-script/tablero/` (4-oct). App web "Solo yo" sobre la hoja de Finanzas; detalle por deudor, tarjeta y cuenta; pestaña Ingresos; diseño "sala de control" (oscuro, acento violeta) |
+| Tablero (Apps Script) | **v5** | — | `apps-script/tablero/` (4-oct). App web "Solo yo" sobre la hoja de Finanzas; detalle por deudor, tarjeta y cuenta; pestaña Ingresos; diseño "sala de control". v5: corregir categoría y detalle, registrar pagos, deshacer y botón al bot `@AsistenteFinanzasWD_bot` |
 
 Arquitectura del bot de finanzas, acciones, pestañas de la hoja y modelo de datos: [docs/finanzas-arquitectura.md](docs/finanzas-arquitectura.md).
 Asistente personal y bot de pagos: [docs/asistente-y-pagos.md](docs/asistente-y-pagos.md).

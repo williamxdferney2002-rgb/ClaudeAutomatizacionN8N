@@ -4,7 +4,9 @@
  * Lee las pestañas que usa el bot de Telegram (Movimientos, Cuentas, Cuotas tarjeta, Personas,
  * Préstamos, Cuotas préstamo, Activos, Operaciones inversión, Presupuestos, Historial, Parámetros)
  * y calcula saldos, deudas e inversiones con la MISMA lógica del bot (nodos Contexto/Reporte).
- * No escribe nada en la hoja.
+ * Desde la v5 también escribe, solo con lo que pide la página: corregir categoría o detalle de un movimiento,
+ * registrar que alguien pagó (deuda suelta o cuotas de un préstamo) y deshacer eso. Cada escritura pasa por un
+ * candado, se valida aquí (no en la página) y queda en Log Bot con Origen "Tablero".
  *
  * INSTALAR: en la hoja → Extensiones > Apps Script → crear los archivos Codigo.gs, Index.html y
  * appsscript.json con este contenido → Guardar → Implementar > Nueva implementación > App web
@@ -252,7 +254,10 @@ function calcular(T, ahora) {
   const signo = t => ENTRA.includes(t) ? 1 : (DEST.includes(t) ? 0 : (SALE.includes(t) ? -1 : 0));
   const movimientos = movs.filter(r => !isNaN(r._dia)).sort((a, b) => b._dia - a._dia || String(b.ID).localeCompare(String(a.ID))).slice(0, MAX_MOVIMIENTOS)
     .map(r => ({ f: ymd(r._dia), t: r.Tipo, m: Math.round(r._monto), s: r.Tipo === 'Ajuste' ? (r._monto >= 0 ? 1 : -1) : signo(r.Tipo), c: cta(r.Cuenta).nombre || r.Cuenta || '',
-      d: cta(r['Cuenta destino']).nombre || r['Cuenta destino'] || '', p: r.Persona || '', k: r['Categoría'] || '', x: String(r.Detalle || r.Comercio || '') }));
+      d: cta(r['Cuenta destino']).nombre || r['Cuenta destino'] || '', p: r.Persona || '', k: r['Categoría'] || '', x: String(r.Detalle || r.Comercio || ''),
+      i: String(r.ID), dt: String(r.Detalle || ''), o: r.Origen || '' }));
+  const categorias = {};
+  for (const c of T.categorias.filter(c => c.Nombre && String(c.Activa || 'Sí') !== 'No')) (categorias[c.Tipo] = categorias[c.Tipo] || []).push(String(c.Nombre));
 
   const historial = T.historial.filter(h => !isNaN(dia(h.Fecha))).map(h => ({ fecha: ymd(dia(h.Fecha)), patrimonio: num(h['Patrimonio neto']), disponible: num(h['Efectivo y cuentas']),
     inversiones: num(h['Inversiones COP']), deudaTarjetas: num(h['Deuda tarjetas']), meDeben: num(h['Me deben']) })).sort((a, b) => a.fecha < b.fecha ? -1 : 1);
@@ -266,10 +271,195 @@ function calcular(T, ahora) {
     inversiones: inversiones.sort((a, b) => b.valor - a.valor),
     deudores: deudas.filter(d => d.total > 0).sort((a, b) => b.total - a.total),
     acreedores: deudas.filter(d => d.yoDebo > 0).map(d => ({ nombre: d.nombre, monto: d.yoDebo, recibidos: d.detalle.recibidos, pagados: d.detalle.pagados })).sort((a, b) => b.monto - a.monto),
-    prestamos: resumenPrestamos, cuotasProximas,
+    prestamos: resumenPrestamos, cuotasProximas, categorias,
+    cuentasCobro: cuentas.filter(c => c.activa && !['Tarjeta de crédito', 'Inversión', 'CDT'].includes(c.tipo)).map(c => ({ id: c.id, nombre: c.nombre, padre: c.padre })),
+    bot: String(P('usuario_bot') || (typeof BOT_TELEGRAM !== 'undefined' ? BOT_TELEGRAM : '')).replace(/^@/, ''),
     gastosMes, ingresosMes, ingresosCat, entradasMes, presupuestos, movimientos, historial
   };
 }
 
+// --- CORRECCIONES DESDE EL TABLERO (v5) ---
+// Escribe con el MISMO formato del bot (IDs MOV-/OP-, "Cuotas préstamo: ID=valor" en Comentarios, Log Bot),
+// así /deshacer en Telegram también deshace un pago hecho aquí. Todo pasa por un candado y se valida en el servidor.
+const BOT_TELEGRAM = 'AsistenteFinanzasWD_bot';   // se puede cambiar en Parámetros → usuario_bot
+const TIPOS_CATEGORIA = ['Gasto', 'Ingreso'];
+const CUENTAS_NO_COBRO = ['Tarjeta de crédito', 'Inversión', 'CDT'];
+
+function ahoraTxt_(formato) {
+  const d = new Date();
+  if (typeof Utilities !== 'undefined') return Utilities.formatDate(d, ZONA, formato);
+  const s = new Date(d.getTime() + ZONA_OFFSET_H * 3600e3).toISOString();   // pruebas en Node
+  const p = { yy: s.slice(2, 4), yyyy: s.slice(0, 4), MM: s.slice(5, 7), dd: s.slice(8, 10), HH: s.slice(11, 13), mm: s.slice(14, 16), ss: s.slice(17, 19) };
+  return formato.replace(/yyyy|yy|MM|dd|HH|mm|ss/g, k => p[k]);
+}
+/** Igual que "Solicitudes" del bot: evita fórmulas y que un texto como "1/2" se vuelva fecha. */
+function limpio_(v, col) {
+  if (v === undefined || v === null) return '';
+  if (typeof v !== 'string') return v;
+  const fechaCol = /^(Fecha|Creado|Modificado|Expira|Actualizado|Hora|Mes)/i.test(col || '');
+  return (/^[=+@]/.test(v) || (!fechaCol && /^\d{1,2}[\/:-]\d{1,2}([\/-]\d{2,4})?$/.test(v.trim()))) ? "'" + v : v;
+}
+/** Una pestaña como tabla: encabezados, filas (con row_number), agregar, cambiar celdas y borrar. */
+function tabla_(ss, nombre) {
+  const sh = ss.getSheetByName(nombre);
+  if (!sh) throw new Error('No encontré la pestaña "' + nombre + '".');
+  const valores = sh.getDataRange().getValues();
+  const head = (valores[0] || []).map(h => String(h).trim());
+  return {
+    head, filas: filasDe_(valores),
+    agregar(obj) { sh.appendRow(head.map(h => limpio_(obj[h], h))); },
+    cambiar(row, cambios) { for (const [c, v] of Object.entries(cambios)) { const j = head.indexOf(c); if (j >= 0) sh.getRange(row, j + 1).setValue(limpio_(v, c)); } },
+    borrar(row) { sh.deleteRow(row); }
+  };
+}
+function conCandado_(fn) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('La hoja está ocupada. Intenta de nuevo en unos segundos.');
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+function log_(ss, clave, accion, tablaN, idReg, datos, antes, nuevo) {
+  tabla_(ss, 'Log Bot').agregar({ FechaHora: ahoraTxt_('yyyy-MM-dd HH:mm'), 'Run ID': clave, Origen: 'Tablero', 'ID mensaje': '', 'Acción': accion, Tabla: tablaN, 'ID registro': idReg,
+    Resultado: 'OK', Error: '', 'Datos recibidos': JSON.stringify(datos).slice(0, 2000), 'Valor anterior': antes ? JSON.stringify(antes).slice(0, 2000) : '', 'Valor nuevo': nuevo });
+}
+function texto_(v, max) { return String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max); }
+function claveOk_(c) { const s = String(c || ''); if (!/^[A-Za-z0-9]{8,40}$/.test(s)) throw new Error('Solicitud inválida (sin clave). Recarga la página.'); return s; }
+function fechaPago_(v, hoy) {
+  if (!v) return hoy;
+  const s = String(v); if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(dia(s))) throw new Error('La fecha no es válida.');
+  if (s > hoy) throw new Error('La fecha no puede ser futura.');
+  return s;
+}
+
+/** Cambia categoría y/o detalle de un movimiento. p = { id, categoria, detalle, clave } */
+function corregirMovimiento(p) {
+  p = p || {}; const clave = claveOk_(p.clave);
+  return conCandado_(() => {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const M = tabla_(ss, HOJAS.movimientos);
+    const fila = M.filas.find(r => String(r.ID) === String(p.id || ''));
+    if (!fila) throw new Error('No encontré ese movimiento; puede que lo hayan borrado. Recarga la página.');
+    const cambios = {}, antes = {};
+    if (p.categoria !== undefined && p.categoria !== null && p.categoria !== String(fila['Categoría'] || '')) {
+      if (!TIPOS_CATEGORIA.includes(fila.Tipo)) throw new Error('Un movimiento de tipo ' + fila.Tipo + ' no lleva categoría.');
+      const cats = tabla_(ss, HOJAS.categorias).filas.filter(c => c.Nombre && c.Tipo === fila.Tipo && String(c.Activa || 'Sí') !== 'No').map(c => String(c.Nombre));
+      if (!cats.includes(String(p.categoria))) throw new Error('"' + p.categoria + '" no es una categoría de ' + fila.Tipo.toLowerCase() + ' activa.');
+      cambios['Categoría'] = String(p.categoria); antes['Categoría'] = fila['Categoría'] || '';
+    }
+    if (p.detalle !== undefined && p.detalle !== null) {
+      const det = texto_(p.detalle, 200);
+      if (!det) throw new Error('El detalle no puede quedar vacío.');
+      if (det !== String(fila.Detalle || '')) { cambios.Detalle = det; antes.Detalle = fila.Detalle || ''; }
+    }
+    if (!Object.keys(cambios).length) return { ok: true, sinCambios: true, datos: getDatos() };
+    cambios.Modificado = ahoraTxt_('yyyy-MM-dd HH:mm');
+    M.cambiar(fila.row_number, cambios);
+    log_(ss, clave, 'corregir', HOJAS.movimientos, fila.ID, { id: fila.ID, categoria: p.categoria, detalle: p.detalle }, antes,
+      Object.keys(antes).map(k => k + ': ' + (antes[k] || '—') + ' → ' + cambios[k]).join('; '));
+    return { ok: true, mensaje: 'Corregí el movimiento.', deshacer: { tipo: 'corregir', id: fila.ID, antes }, datos: getDatos() };
+  });
+}
+
+/** Registra que una persona pagó. p = { persona, destino: 'suelta' | ID de préstamo, monto, cuenta (ID), fecha, clave } */
+function registrarPago(p) {
+  p = p || {}; const clave = claveOk_(p.clave);
+  return conCandado_(() => {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const M = tabla_(ss, HOJAS.movimientos);
+    const ya = M.filas.find(r => String(r['Clave origen'] || '').indexOf('tablero_' + clave + '_') === 0);
+    if (ya) return { ok: true, repetido: true, mensaje: 'Ese pago ya estaba registrado.', datos: getDatos() };
+    const D = getDatos();
+    const deudor = D.deudores.find(x => x.nombre === p.persona);
+    if (!deudor) throw new Error((p.persona || 'Esa persona') + ' no te debe nada registrado.');
+    const monto = Math.round(num(p.monto));
+    if (!(monto > 0)) throw new Error('Escribe cuánto te pagó.');
+    const cuentaF = tabla_(ss, HOJAS.cuentas).filas.find(c => String(c.ID) === String(p.cuenta || ''));
+    if (!cuentaF || String(cuentaF.Activa || 'Sí') === 'No' || CUENTAS_NO_COBRO.includes(cuentaF.Tipo)) throw new Error('Elige la cuenta donde llegó la plata.');
+    const hoy = ahoraTxt_('yyyy-MM-dd'), fecha = fechaPago_(p.fecha, hoy);
+    const sello = ahoraTxt_('yyMMddHHmmss') + '-T' + clave.slice(0, 6), OP = 'OP-' + sello, creado = ahoraTxt_('yyyy-MM-dd HH:mm');
+    let k = 0; const ids = [];
+    const mov = m => { const id = 'MOV-' + sello + '-' + (++k); ids.push(id);
+      M.agregar({ ID: id, 'Operación': OP, 'Clave origen': 'tablero_' + clave + '_' + k, Creado: creado, Modificado: creado, Fecha: fecha, Hora: '', Tipo: m.tipo, Monto: Math.round(m.monto), Moneda: 'COP',
+        Cuenta: cuentaF.ID, 'Cuenta destino': '', Comercio: '', Persona: deudor.nombre, 'Categoría': m.categoria || '', Etiquetas: '', Detalle: m.detalle, Comentarios: m.comentarios || '',
+        Referencia: m.ref || '', Cuotas: '', Tasa: '', Origen: 'Tablero', 'Link comprobante': '', 'ID documento': '', 'ID mensaje': '', 'Estado revisión': 'OK', 'ID extracto': '' }); };
+    let resumen;
+    if (p.destino === 'suelta') {
+      if (deudor.informal <= 0) throw new Error(deudor.nombre + ' no tiene deuda suelta pendiente.');
+      if (monto > deudor.informal + 1) throw new Error('Es más de lo que te debe suelto (' + pesos_(deudor.informal) + ').');
+      mov({ tipo: 'Abono recibido', monto, detalle: 'Pago de ' + deudor.nombre });
+      const queda = deudor.informal - monto;
+      resumen = 'Registré ' + pesos_(monto) + ' de ' + deudor.nombre + ' a ' + cuentaF.Nombre + '. ' + (queda > 1 ? 'Le queda ' + pesos_(queda) + ' suelto.' : 'Ya no te debe nada suelto 🎉');
+    } else {
+      const pr = (deudor.detalle.prestamos || []).find(x => x.id === p.destino);
+      if (!pr) throw new Error('Ese préstamo no es de ' + deudor.nombre + '.');
+      const Q = tabla_(ss, HOJAS.cuotasPrestamo);
+      const qs = Q.filas.filter(q => q['ID préstamo'] === pr.id && !['Pagada', 'Anulada'].includes(q.Estado)).sort((a, b) => num(a['Nº']) - num(b['Nº']));
+      const saldo = qs.reduce((s, q) => s + num(q['Valor cuota']) - num(q['Valor recibido']), 0);
+      if (saldo <= 0) throw new Error('El préstamo ' + pr.id + ' ya está pagado.');
+      if (monto > Math.round(saldo) + 1) throw new Error('Es más de lo que falta del préstamo ' + pr.id + ' (' + pesos_(saldo) + ').');
+      // Igual que "cobrar_cuota" del bot: reparte de la cuota más vieja a la más nueva, separando capital e interés
+      let resto = monto, capital = 0, interes = 0; const nums = [], aplicado = [], idMov = 'MOV-' + sello + '-1';
+      for (const q of qs) {
+        if (resto <= 0) break;
+        const v = num(q['Valor cuota']), rec = num(q['Valor recibido']), pend = v - rec, pago = Math.min(resto, pend);
+        const cap = num(q.Capital) || v, parteCap = v ? pago * cap / v : pago;
+        capital += parteCap; interes += pago - parteCap; resto -= pago;
+        const completa = rec + pago >= v - 1;
+        Q.cambiar(q.row_number, { 'Valor recibido': rec + pago, Estado: completa ? 'Pagada' : 'Pendiente', 'Fecha pago': completa ? fecha : '', 'Cuenta donde llegó': cuentaF.ID, 'ID movimiento': idMov });
+        nums.push(completa ? String(q['Nº']) : q['Nº'] + ' (parcial)');
+        aplicado.push(q.ID + '=' + Math.round(pago));
+      }
+      mov({ tipo: 'Cobro cuota', monto: capital, detalle: 'Cuota ' + nums.join(', ') + ' de ' + deudor.nombre, ref: pr.id, comentarios: 'Cuotas préstamo: ' + aplicado.join(';') });
+      if (Math.round(interes) > 0) mov({ tipo: 'Ingreso', monto: interes, categoria: 'Intereses préstamos', detalle: 'Intereses cuota ' + nums.join(', ') + ' de ' + deudor.nombre, ref: pr.id });
+      const queda = saldo - monto;
+      resumen = 'Registré ' + pesos_(monto) + ' de ' + deudor.nombre + ' (cuota ' + nums.join(', ') + (Math.round(interes) > 0 ? ', ' + pesos_(interes) + ' de intereses' : '') + ') a ' + cuentaF.Nombre + '. ' +
+        (queda > 1 ? 'Le quedan ' + pesos_(queda) + ' del préstamo.' : '¡Terminó de pagarte el préstamo! 🎉');
+    }
+    log_(ss, clave, 'cobrar_cuota', HOJAS.movimientos, ids.join(', '), { persona: deudor.nombre, destino: p.destino, monto, cuenta: cuentaF.ID, fecha }, null, resumen);
+    return { ok: true, mensaje: resumen, deshacer: { tipo: 'pago', operacion: OP }, datos: getDatos() };
+  });
+}
+
+/** Deshace un cambio hecho desde el tablero. p = { tipo: 'corregir', id, antes } | { tipo: 'pago', operacion }, más clave */
+function deshacerCambio(p) {
+  p = p || {}; const clave = claveOk_(p.clave);
+  return conCandado_(() => {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const M = tabla_(ss, HOJAS.movimientos);
+    if (p.tipo === 'corregir') {
+      const fila = M.filas.find(r => String(r.ID) === String(p.id || ''));
+      if (!fila) throw new Error('No encontré ese movimiento.');
+      const cambios = {};
+      for (const c of ['Categoría', 'Detalle']) if (p.antes && Object.prototype.hasOwnProperty.call(p.antes, c)) cambios[c] = texto_(p.antes[c], 200);
+      if (!Object.keys(cambios).length) throw new Error('No hay nada que deshacer.');
+      cambios.Modificado = ahoraTxt_('yyyy-MM-dd HH:mm');
+      M.cambiar(fila.row_number, cambios);
+      log_(ss, clave, 'deshacer', HOJAS.movimientos, fila.ID, p, null, 'Volvió a como estaba');
+      return { ok: true, mensaje: 'Listo, quedó como estaba.', datos: getDatos() };
+    }
+    if (p.tipo === 'pago') {
+      const op = String(p.operacion || '');
+      const filas = M.filas.filter(r => r['Operación'] === op);
+      if (!filas.length) return { ok: true, mensaje: 'Ese pago ya no estaba (quizá lo deshiciste desde Telegram).', datos: getDatos() };
+      if (filas.some(r => r.Origen !== 'Tablero')) throw new Error('Solo puedo deshacer pagos registrados desde el tablero.');
+      // Igual que /deshacer del bot: devuelve a cada cuota exactamente lo que se le aplicó
+      const Q = tabla_(ss, HOJAS.cuotasPrestamo);
+      for (const m of filas.filter(r => r.Tipo === 'Cobro cuota')) {
+        const det = String(m.Comentarios || '').match(/Cuotas préstamo: (.+)/); if (!det) continue;
+        for (const par of det[1].split(';')) {
+          const [id, v] = par.split('='); const q = Q.filas.find(x => String(x.ID) === String(id).trim()); if (!q) continue;
+          const queda = Math.max(0, Math.round(num(q['Valor recibido']) - num(v))), completa = queda >= num(q['Valor cuota']) - 1;
+          Q.cambiar(q.row_number, Object.assign({ 'Valor recibido': queda || '', Estado: completa ? 'Pagada' : 'Pendiente', 'Fecha pago': completa ? (q['Fecha pago'] || '') : '' },
+            queda ? {} : { 'Cuenta donde llegó': '', 'ID movimiento': '' }));
+        }
+      }
+      filas.map(r => r.row_number).sort((a, b) => b - a).forEach(row => M.borrar(row));   // de abajo hacia arriba para no correr filas
+      log_(ss, clave, 'deshacer', HOJAS.movimientos, filas.map(r => r.ID).join(', '), p, null, 'Borré el pago registrado desde el tablero');
+      return { ok: true, mensaje: 'Listo, deshice ese pago.', datos: getDatos() };
+    }
+    throw new Error('No sé qué deshacer.');
+  });
+}
+function pesos_(n) { return (n < 0 ? '-$' : '$') + String(Math.abs(Math.round(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
 // Para las pruebas fuera de Google (Node); en Apps Script no hace nada
-if (typeof module !== 'undefined') module.exports = { calcular, filasDe_, num, dia, ymd };
+if (typeof module !== 'undefined') module.exports = { calcular, filasDe_, num, dia, ymd, getDatos, corregirMovimiento, registrarPago, deshacerCambio, limpio_ };

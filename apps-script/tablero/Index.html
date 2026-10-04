@@ -171,6 +171,40 @@
   .hoja-cuerpo h4 { margin: 24px 4px 10px; font-size: 16px; font-weight: 500; }
   .hoja-cuerpo .libro { border-radius: 22px; background: var(--fondo); }
   .hoja-cuerpo p.tenue { margin: 12px 4px; }
+  /* Formularios (v5): corregir y registrar pago */
+  .form { display: grid; gap: 16px; margin-top: 16px; }
+  .form label { display: grid; gap: 6px; font-size: 13px; color: var(--tinta-2); }
+  .form input, .form select { width: 100%; min-width: 0; border: 1px solid var(--campo); border-radius: var(--r-campo); background: var(--fondo); color: var(--tinta); padding: 12px 14px; font-size: 16px; }
+  .form input:focus, .form select:focus { outline: none; border-color: var(--violeta); box-shadow: var(--brillo); }
+  .form .monto-campo { font-family: var(--mono); font-size: 22px; letter-spacing: -0.02em; }
+  .atajos { display: flex; flex-wrap: wrap; gap: 6px; }
+  .atajos button { border: 1px solid var(--borde-2); background: none; border-radius: 30px; padding: 6px 12px; font-size: 13px; color: var(--tinta-2); }
+  .atajos button:hover { border-color: var(--violeta); color: var(--tinta); }
+  .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .btn-primario { border: 0; background: var(--azul); color: #fff; border-radius: 30px; padding: 13px 24px; font-weight: 500; flex: 1; min-width: 140px; }
+  .btn-primario:hover { background: #5068ff; }
+  .btn-primario:disabled { opacity: 0.6; cursor: wait; }
+  .btn-sec { border: 1px solid var(--borde-2); background: none; color: var(--tinta-2); border-radius: 30px; padding: 12px 20px; }
+  .form-error { color: var(--rojo); font-size: 14px; min-height: 1px; }
+  .form-error:empty { display: none; }
+  .nota { font-size: 13px; color: var(--tenue); margin: 0; }
+  .pagar { display: flex; margin: 14px 0 0; width: 100%; justify-content: center; }
+  .mini { grid-column: 1 / -1; justify-self: start; margin-top: 8px; border: 1px solid var(--violeta); background: none; color: var(--violeta); border-radius: 30px; padding: 6px 16px; font-size: 13px; font-weight: 500; }
+  .mini:hover { background: var(--realce); }
+  /* Botón al bot de Telegram */
+  .btn-bot { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 14px 0 12px; border-radius: 30px; border: 1px solid rgba(112, 132, 255, 0.45); background: var(--panel); color: var(--tinta); text-decoration: none; font-size: 14px; flex: none; }
+  .btn-bot svg { width: 17px; height: 17px; fill: none; stroke: var(--violeta); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  .btn-bot:hover { box-shadow: var(--brillo-suave); border-color: var(--violeta); }
+  @media (max-width: 420px) { .estado .txt-al { display: none; } header.top { gap: 8px; } }
+  /* Aviso después de guardar, con Deshacer */
+  .aviso { position: fixed; left: 12px; right: 12px; bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 30; display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px;
+    background: var(--panel); border: 1px solid rgba(112, 132, 255, 0.45); border-radius: 20px; box-shadow: var(--brillo); font-size: 14px; animation: aparecer 0.2s ease-out; }
+  .aviso .msg { flex: 1; min-width: 0; }
+  .aviso button { flex: none; border: 0; background: var(--realce); color: var(--violeta); border-radius: 30px; padding: 8px 14px; font-weight: 500; }
+  .aviso.malo { border-color: var(--rojo); }
+  @keyframes aparecer { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (min-width: 960px) { .aviso { left: auto; right: 24px; bottom: 24px; max-width: 460px; } }
+  @media (prefers-reduced-motion: reduce) { .aviso { animation: none; } }
   .agarre { width: 40px; height: 4px; border-radius: 2px; background: var(--borde-2); margin: 10px auto 0; }
   @media (min-width: 960px) { .agarre { display: none; } }
 </style>
@@ -179,6 +213,7 @@
 <header class="top">
   <h1>Mis finanzas</h1>
   <div class="estado"><span class="senal" id="senal" aria-hidden="true"></span><span id="estado" aria-live="polite">Cargando…</span></div>
+  <a class="btn-bot" id="ir-bot" href="https://t.me/AsistenteFinanzasWD_bot" target="_blank" rel="noopener" title="Abrir el bot en Telegram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 3.5 2.8 10.7c-.9.4-.9 1.6.1 1.9l4.6 1.5 1.8 5.6c.3.8 1.3 1 1.9.4l2.6-2.5 4.7 3.5c.7.5 1.7.1 1.9-.7L22.9 4.9c.2-1-.6-1.8-1.4-1.4Z"/><path d="m7.5 14.1 10.3-7.3-7.6 9.2"/></svg>Bot</a>
   <button class="btn-ico" id="recargar" aria-label="Actualizar ahora" title="Actualizar ahora">↻</button>
 </header>
 
@@ -287,6 +322,8 @@
   <button role="tab" data-tab="cuentas"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M16 15h2.5"/></svg>Cuentas</button>
 </nav>
 
+<div class="aviso" id="aviso" role="status" hidden><div class="msg" id="aviso-msg"></div><button id="aviso-deshacer" hidden>Deshacer</button><button id="aviso-cerrar" aria-label="Cerrar aviso">✕</button></div>
+
 <dialog class="hoja" id="hoja" aria-labelledby="hoja-titulo">
   <div class="agarre" aria-hidden="true"></div>
   <div class="hoja-cab"><div><h3 id="hoja-titulo"></h3><div class="tenue" id="hoja-sub"></div></div><button class="btn-ico cerrar" id="hoja-cerrar" aria-label="Cerrar">✕</button></div>
@@ -322,7 +359,7 @@
   // ---------- Datos ----------
   function cargar() {
     if (cargando) return; cargando = true; $('estado').textContent = 'Actualizando…';
-    const ok = d => { cargando = false; D = d; $('mensaje').innerHTML = ''; $('estado').textContent = `al día ${d.generado.slice(11)}`; $('senal').className = 'senal vivo'; pintar(); };
+    const ok = d => { cargando = false; D = d; $('mensaje').innerHTML = ''; $('estado').innerHTML = `<span class="txt-al">al día </span>${esc(d.generado.slice(11))}`; if (d.bot) $('ir-bot').href = 'https://t.me/' + encodeURIComponent(d.bot); $('senal').className = 'senal vivo'; pintar(); };
     const mal = e => { cargando = false; $('estado').textContent = 'sin conexión'; $('senal').className = 'senal caida';
       $('mensaje').innerHTML = `<div class="aviso-error">No pude leer la hoja (${esc(e && e.message || e)}). Revisa tu conexión y toca ↻.</div>`; };
     if (window.google && google.script && google.script.run) google.script.run.withSuccessHandler(ok).withFailureHandler(mal).getDatos();
@@ -458,7 +495,7 @@
       const signo = m.s > 0 ? '+' : m.s < 0 ? '−' : '';
       html += `<details class="mov"><summary><div class="cuerpo" style="flex:1;min-width:0"><div class="titulo" style="font-weight:500;overflow-wrap:anywhere">${esc(bonito(m.x) || m.t)}</div><div class="tenue">${esc(m.t)}${m.p ? ', ' + esc(m.p) : ''}</div></div>` +
         `<div class="monto num ${m.s > 0 ? 'signo-mas' : 'signo-menos'}" style="font-weight:500">${signo}${esc(pesos(m.m).replace('-', ''))}</div></summary>` +
-        `<div class="extra"><span>Cuenta</span><span>${esc(m.c || 'sin cuenta')}${m.d ? ' hacia ' + esc(m.d) : ''}</span>${m.k ? `<span>Categoría</span><span>${esc(m.k)}</span>` : ''}${m.p ? `<span>Persona</span><span>${esc(m.p)}</span>` : ''}<span>Fecha</span><span>${esc(fLarga(m.f))}</span></div></details>`;
+        `<div class="extra"><span>Cuenta</span><span>${esc(m.c || 'sin cuenta')}${m.d ? ' hacia ' + esc(m.d) : ''}</span>${m.k ? `<span>Categoría</span><span>${esc(m.k)}</span>` : ''}${m.p ? `<span>Persona</span><span>${esc(m.p)}</span>` : ''}<span>Fecha</span><span>${esc(fLarga(m.f))}</span><button class="mini" data-corregir="${esc(m.i)}">Corregir</button></div></details>`;
     }
     $('m-lista').innerHTML = html || '<div class="vacio">Ningún movimiento coincide con esos filtros. Quita alguno para ver más.</div>';
     $('m-mas').hidden = lista.length <= movVisibles;
@@ -517,6 +554,7 @@
     const x = D.deudores.find(d => d.nombre === nombre); if (!x) return;
     const det = x.detalle, cuadro = `<div class="libro tres" style="margin-top:12px"><div><div class="k">Te debe</div><div class="v num">${esc(pesos(x.total))}</div></div><div><div class="k">Suelto</div><div class="v num">${esc(pesos(Math.max(0, x.informal)))}</div></div><div><div class="k">En cuotas</div><div class="v num">${esc(pesos(x.cuotas))}</div></div></div>`;
     let h = cuadro;
+    if (x.informal > 0) h += `<button class="btn-primario pagar" data-pagar="suelta" data-persona="${esc(nombre)}">Registrar pago de lo suelto</button>`;
     if (det.items.length) {
       h += `<h4>Lo que te debe</h4><div class="libro filas">` + det.items.map(it => fila(it.f, esc(bonito(it.x)), [it.c ? 'pagado con ' + esc(it.c) : '', it.estado === 'pagado' ? '✓ ya te lo pagó' : it.estado === 'parcial' ? `abonó una parte, queda ${esc(pesos(it.queda))}` : ''].filter(Boolean).join(', '),
         esc(pesos(it.m)), it.estado === 'pagado' ? 'tachado' : '')).join('') + '</div>';
@@ -525,8 +563,10 @@
       : `<div class="libro vacio">Todavía no te ha abonado nada de lo suelto.</div>`);
     for (const p of det.prestamos) {
       const pag = p.cuotas.filter(q => q.estado === 'Pagada').length, n = p.cuotas.filter(q => q.estado !== 'Anulada').length;
+      const falta = p.cuotas.filter(q => !['Pagada', 'Anulada'].includes(q.estado)).reduce((s, q) => s + q.valor - q.recibido, 0);
       h += `<h4>Préstamo ${esc(p.id)}</h4><div class="libro" style="padding:12px 14px"><div>${esc(pesos(p.monto))} en ${n} cuotas de ${esc(pesos(p.valor))}${p.frecuencia ? ', ' + esc(p.frecuencia.toLowerCase()) : ''}</div>` +
-        `<div class="barra-una" style="margin-top:8px"><i style="width:${Math.round(pag * 100 / (n || 1))}%;background:var(--s3)"></i></div><div class="tenue">${pag} de ${n} cuotas pagadas</div>${p.notas ? `<div class="tenue">${esc(p.notas)}</div>` : ''}</div>` +
+        `<div class="barra-una" style="margin-top:8px"><i style="width:${Math.round(pag * 100 / (n || 1))}%;background:var(--s3)"></i></div><div class="tenue">${pag} de ${n} cuotas pagadas</div>${p.notas ? `<div class="tenue">${esc(p.notas)}</div>` : ''}` +
+        (falta > 0 ? `<button class="mini" data-pagar="${esc(p.id)}" data-persona="${esc(nombre)}">Registrar pago de cuotas</button>` : '') + `</div>` +
         `<div class="libro filas" style="margin-top:8px">` + p.cuotas.filter(q => q.estado !== 'Anulada').map(q => fila(q.fecha, `Cuota ${q.n}`,
           q.estado === 'Pagada' ? '✓ pagada' : q.recibido > 0 ? `abonó ${esc(pesos(q.recibido))}, faltan ${esc(pesos(q.valor - q.recibido))}` : q.vencida ? '⚠️ vencida' : 'pendiente', esc(pesos(q.valor)), q.estado === 'Pagada' ? 'tachado' : '')).join('') + '</div>';
     }
@@ -563,10 +603,99 @@
     abrirHoja(c.nombre, c.tipo + (c.vence ? `, vence el ${fLarga(c.vence)}` : ''), h);
   }
 
+  // ---------- Correcciones (v5): todo se valida otra vez en el servidor ----------
+  const nuevaClave = () => { const a = new Uint8Array(10); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => { a[i] = Math.random() * 256; }); return [...a].map(b => b.toString(16).padStart(2, '0')).join(''); };
+  const soloNum = s => Math.round(+String(s || '').replace(/[^\d]/g, '')) || 0;
+  let pendiente = null, temporizador = null;
+  function aviso(msg, deshacer, malo) {
+    clearTimeout(temporizador); pendiente = deshacer || null;
+    $('aviso-msg').textContent = msg; $('aviso').classList.toggle('malo', !!malo); $('aviso-deshacer').hidden = !deshacer; $('aviso').hidden = false;
+    temporizador = setTimeout(() => { $('aviso').hidden = true; pendiente = null; }, deshacer ? 15000 : 6000);
+  }
+  // Llama al servidor; un reintento con la misma clave no duplica (el servidor la reconoce)
+  function enviar(fn, datos, boton, alFallar) {
+    if (!(window.google && google.script && google.script.run)) { alFallar('Esta página se abre desde Apps Script.'); return; }
+    const txt = boton ? boton.textContent : ''; if (boton) { boton.disabled = true; boton.textContent = 'Guardando…'; }
+    google.script.run.withSuccessHandler(r => {
+      if (boton) { boton.disabled = false; boton.textContent = txt; }
+      if (r && r.datos) { D = r.datos; $('estado').innerHTML = `<span class="txt-al">al día </span>${esc(D.generado.slice(11))}`; pintar(); }
+      cerrarHoja(); aviso(r && r.mensaje || 'Listo.', r && r.deshacer);
+    }).withFailureHandler(e => { if (boton) { boton.disabled = false; boton.textContent = txt; } alFallar(e && e.message || String(e)); })[fn](datos);
+  }
+  function formCorregir(id) {
+    const m = D.movimientos.find(x => x.i === id); if (!m) return;
+    const cats = (D.categorias || {})[m.t];
+    const opts = cats ? [...new Set([m.k, ...cats].filter(Boolean))].map(c => `<option${c === m.k ? ' selected' : ''}>${esc(c)}</option>`).join('') : '';
+    abrirHoja('Corregir movimiento', `${m.t} de ${pesos(m.m)} el ${fLarga(m.f)}`,
+      `<form class="form" id="f-corregir" data-id="${esc(id)}" data-clave="${nuevaClave()}" novalidate>` +
+      (cats ? `<label>Categoría<select id="fc-cat">${m.k ? '' : '<option value="" selected>Sin categoría</option>'}${opts}</select></label>` : `<p class="nota">Un movimiento de tipo ${esc(m.t.toLowerCase())} no lleva categoría; puedes corregir el detalle.</p>`) +
+      `<label>Detalle<input id="fc-det" maxlength="200" value="${esc(m.dt)}" placeholder="${esc(m.x)}" autocomplete="off"></label>` +
+      `<p class="nota">El monto, la cuenta y la fecha se corrigen desde el bot, porque cambian tus saldos.</p>` +
+      `<div class="form-error" id="f-error" role="alert"></div><div class="acciones"><button type="submit" class="btn-primario">Guardar</button><button type="button" class="btn-sec" data-cerrar-hoja>Cancelar</button></div></form>`);
+  }
+  function formPago(nombre, destino) {
+    const x = D.deudores.find(d => d.nombre === nombre); if (!x) return;
+    let total, una = 0, titulo;
+    if (destino === 'suelta') { total = x.informal; titulo = 'Lo que te debe suelto'; }
+    else { const p = x.detalle.prestamos.find(q => q.id === destino); if (!p) return;
+      const pend = p.cuotas.filter(q => !['Pagada', 'Anulada'].includes(q.estado)); total = pend.reduce((s, q) => s + q.valor - q.recibido, 0);
+      una = pend.length ? pend[0].valor - pend[0].recibido : 0; titulo = `Préstamo ${p.id}, ${pend.length} ${pend.length === 1 ? 'cuota pendiente' : 'cuotas pendientes'}`; }
+    let ultima = ''; try { ultima = localStorage.getItem('tablero.cuenta') || ''; } catch (e) {}
+    const cs = D.cuentasCobro || [], hijos = id => cs.filter(c => c.padre === id);
+    const opt = (c, sangria) => `<option value="${esc(c.id)}"${c.id === ultima ? ' selected' : ''}>${sangria ? '   ' : ''}${esc(c.nombre)}</option>`;
+    const cuentasHtml = cs.filter(c => !c.padre || !cs.some(p => p.id === c.padre)).map(c => opt(c) + hijos(c.id).map(hh => opt(hh, true)).join('')).join('');
+    abrirHoja(`Pago de ${nombre}`, `${titulo}: ${pesos(total)}`,
+      `<form class="form" id="f-pago" data-persona="${esc(nombre)}" data-destino="${esc(destino)}" data-total="${total}" data-clave="${nuevaClave()}" novalidate>` +
+      `<label>¿Cuánto te pagó?<input id="fp-monto" class="monto-campo" inputmode="numeric" autocomplete="off" value="${esc(pesos(total))}"></label>` +
+      `<div class="atajos"><button type="button" data-monto="${total}">Todo, ${esc(pesos(total))}</button>${una && una < total ? `<button type="button" data-monto="${una}">Una cuota, ${esc(pesos(una))}</button>` : ''}</div>` +
+      `<label>¿A qué cuenta llegó?<select id="fp-cuenta">${ultima ? '' : '<option value="" selected disabled>Elige la cuenta</option>'}${cuentasHtml}</select></label>` +
+      `<label>Fecha del pago<input id="fp-fecha" type="date" value="${esc(D.hoy)}" max="${esc(D.hoy)}"></label>` +
+      `<p class="nota" id="fp-queda"></p>` +
+      `<div class="form-error" id="f-error" role="alert"></div><div class="acciones"><button type="submit" class="btn-primario">Registrar pago</button><button type="button" class="btn-sec" data-volver="${esc(nombre)}">Volver</button></div></form>`);
+    actualizarQueda();
+  }
+  function actualizarQueda() {
+    const f = $('f-pago'); if (!f) return;
+    const m = soloNum($('fp-monto').value), total = +f.dataset.total, q = total - m;
+    $('fp-queda').classList.toggle('alerta', m > total + 1);
+    $('fp-queda').textContent = !m ? '' : m > total ? `Es más de lo que debe (${pesos(total)}).` : q > 0 ? `Le quedaría debiendo ${pesos(q)}.` : 'Quedaría a paz y salvo 🎉';
+  }
+  document.addEventListener('submit', e => {
+    const f = e.target; e.preventDefault();
+    const boton = f.querySelector('button[type="submit"]'), mal = msg => { $('f-error').textContent = msg; };
+    $('f-error').textContent = '';
+    if (f.id === 'f-corregir') {
+      const m = D.movimientos.find(x => x.i === f.dataset.id) || {}, datos = { id: f.dataset.id, clave: f.dataset.clave };
+      if ($('fc-cat') && $('fc-cat').value && $('fc-cat').value !== m.k) datos.categoria = $('fc-cat').value;
+      const det = $('fc-det').value.trim(); if (det !== (m.dt || '').trim()) { if (!det) return mal('El detalle no puede quedar vacío.'); datos.detalle = det; }
+      if (!datos.categoria && datos.detalle === undefined) return mal('No cambiaste nada.');
+      enviar('corregirMovimiento', datos, boton, mal);
+    }
+    if (f.id === 'f-pago') {
+      const monto = soloNum($('fp-monto').value), cuenta = $('fp-cuenta').value;
+      if (!monto) return mal('Escribe cuánto te pagó.');
+      if (monto > +f.dataset.total + 1) { actualizarQueda(); return $('fp-monto').focus(); }   // la nota ya lo dice en rojo
+      if (!cuenta) return mal('Elige la cuenta donde llegó la plata.');
+      try { localStorage.setItem('tablero.cuenta', cuenta); } catch (er) {}
+      enviar('registrarPago', { persona: f.dataset.persona, destino: f.dataset.destino, monto, cuenta, fecha: $('fp-fecha').value, clave: f.dataset.clave }, boton, mal);
+    }
+  });
+  document.addEventListener('input', e => { if (e.target.id === 'fp-monto') actualizarQueda(); });
+  $('aviso-cerrar').addEventListener('click', () => { $('aviso').hidden = true; pendiente = null; });
+  $('aviso-deshacer').addEventListener('click', () => {
+    if (!pendiente) return; const datos = Object.assign({ clave: nuevaClave() }, pendiente); pendiente = null; $('aviso-deshacer').hidden = true; $('aviso-msg').textContent = 'Deshaciendo…';
+    enviar('deshacerCambio', datos, null, msg => aviso('No pude deshacer: ' + msg, null, true));
+  });
+
   // ---------- Eventos (delegados) ----------
   document.addEventListener('click', e => {
     const t = e.target.closest('button, [data-abrir]'); if (!t) return;
     if (t.dataset.tab) return ir(t.dataset.tab);
+    if (t.dataset.corregir) return formCorregir(t.dataset.corregir);
+    if (t.dataset.pagar) return formPago(t.dataset.persona, t.dataset.pagar);
+    if (t.dataset.volver) return detallePersona(t.dataset.volver);
+    if (t.dataset.cerrarHoja !== undefined) return cerrarHoja();
+    if (t.dataset.monto) { $('fp-monto').value = pesos(+t.dataset.monto); return actualizarQueda(); }
     if (t.dataset.ir) return ir(t.dataset.ir, t.dataset.ancla ? () => { const a = $(t.dataset.ancla); if (a) a.scrollIntoView({ behavior: 'smooth', block: 'start' }); } : null);
     if (t.dataset.mes) { mesGastos = t.dataset.mes; pintarGastos(); return pintarIngresos(); }
     if (t.dataset.ingcat !== undefined) return verMovimientos(t.dataset.ingcat === 'Ventas de reventa' ? { 'm-tipo': 'Venta reventa', 'm-desde': mesGastos + '-01', 'm-hasta': mesGastos + '-31' } : { 'm-tipo': 'Ingreso', 'm-cat': t.dataset.ingcat, 'm-desde': mesGastos + '-01', 'm-hasta': mesGastos + '-31' });
@@ -585,9 +714,10 @@
   ['m-buscar', 'm-tipo', 'm-cuenta', 'm-persona', 'm-cat', 'm-desde', 'm-hasta'].forEach(id => $(id).addEventListener('input', () => { movVisibles = 60; pintarMovimientos(); }));
   $('m-mas').addEventListener('click', () => { movVisibles += 120; pintarMovimientos(); });
   $('recargar').addEventListener('click', cargar);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) cargar(); });
+  const escribiendo = () => hoja.open && !!$('hoja-cuerpo').querySelector('form');
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !escribiendo()) cargar(); });
   try { const t = localStorage.getItem('tablero.tab'); if (t && $(t)) ir(t); } catch (e) {}
-  setInterval(() => { if (!document.hidden) cargar(); }, REFRESCO_MS);
+  setInterval(() => { if (!document.hidden && !escribiendo()) cargar(); }, REFRESCO_MS);
   cargar();
 })();
 </script>
