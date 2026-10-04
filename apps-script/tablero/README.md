@@ -29,6 +29,7 @@ Los cálculos son los mismos del bot (nodos *Contexto* y *Reporte*): saldo inici
    - **Implementar** → **Autorizar acceso** → elija su cuenta → *Configuración avanzada* → *Ir a … (no seguro)* → **Permitir**. (Es normal: el script es suyo y no está publicado en Google.)
 5. Copie la **URL de la app web** (termina en `/exec`). Ábrala en el celular con la misma cuenta de Google y agréguela a la pantalla de inicio (Chrome → ⋮ → *Agregar a la pantalla principal*).
 6. Recargue la hoja: aparece el menú **📊 Tablero** (*Abrir tablero aquí* y *Ver enlace para el celular*).
+7. Con el bot v14 o superior, mándele el link una vez a Telegram: `/tablero https://script.google.com/macros/s/…/exec`. Desde ahí, `/tablero` (o "tablero") le devuelve el link cuando lo necesite.
 
 ## Actualizar a una versión nueva
 Pegue los archivos nuevos → **Guardar** → **Implementar → Administrar implementaciones → ✏️ → Versión: Nueva versión → Implementar**. La URL no cambia.

@@ -1,10 +1,10 @@
 # Finanzas: arquitectura y modelo de datos
 
-## Flujo "Finanzas - Bot" (v13, 88 nodos)
+## Flujo "Finanzas - Bot" (v14, 88 nodos)
 Telegram Trigger → Normalizar → ¿Autorizado? → Config → **Leer hoja** (batchGet de ~20 pestañas) → **Tablas** → Buscar en log (anti-duplicados por `update_id`) → Abrir registro (Log Bot) → Escribiendo → Leer movimientos → **Contexto** (estado + prompt) → **Tipo**:
 - **Botón** → Contestar → Leer confirmación → Preparar candado → ¿Vigente? → Reservar → Esperar 3 s → Verificar → ¿Es mía? → Editar botones → Marcar respondida → Plan.
-- **Comando** (`/saldos`, `/mes`, `/tarjeta`, `/deudas`, `/prestamos`, `/cobrar`, `/inversiones`, `/reventas`, `/presupuesto`, `/metas`, `/flujo`, `/suscripciones`, `/movimientos`, `/revisar`, `/deshacer`) → Plan.
-- **Texto** → Texto a procesar → **Atajo** (sin IA: movimientos, saldo, deudas, "cuánto me debe X", suscripciones y "X me pagó todo") → IA texto (3.1 Flash Lite) → respaldo Gemma → Interpretar.
+- **Comando** (`/saldos`, `/mes`, `/tarjeta`, `/deudas`, `/prestamos`, `/cobrar`, `/inversiones`, `/reventas`, `/presupuesto`, `/metas`, `/flujo`, `/suscripciones`, `/movimientos`, `/revisar`, `/deshacer`, `/tablero` — link de la app del tablero, guardado en *Parámetros* → `url_tablero`) → Plan.
+- **Texto** → Texto a procesar → **Atajo** (sin IA: movimientos, saldo, deudas, "cuánto me debe X", suscripciones y "X me pagó todo", "tablero" o el link pegado) → IA texto (3.1 Flash Lite) → respaldo Gemma → Interpretar.
 - **Voz** (v10) → Descargar → **Groq Whisper** → Texto a procesar → el mismo camino del texto (Atajo / IA texto). Si Groq falla: IA audio (3.1 FL) → respaldo 3.5 FL → Interpretar.
 - **Archivo** (foto o PDF) → Descargar → Buscar documento (repetido solo si quedó *Procesado*) → Drive (Comprobantes) → Registrar documento → IA imagen o PDF (maxOutputTokens 8000/32000) → Interpretar.
 

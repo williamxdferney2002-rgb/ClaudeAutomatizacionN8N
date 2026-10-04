@@ -47,7 +47,7 @@ node $S/simular_code.js "Flujo.json" "Nombre del nodo" casos.json [--ver]
 - Los casos corren en orden y comparten `$getWorkflowStaticData`, así se prueba un duplicado: repita la misma entrada en un caso posterior.
 - `ahora` fija la hora de Bogotá (Luxon, `$now` y `new Date()`); úselo para cambios de mes, domingo 19:00, día 1, años bisiestos.
 - `espera`: `error`, `cantidad`, `salida` (coincidencia parcial), `contiene`, `no_contiene` (p. ej. `"undefined"`, `"NaN"`).
-- Ejemplos funcionando: `ejemplos/normalizar.casos.json`, `ejemplos/preparar-candado.casos.json` y `ejemplos/atajo-v10.casos.json` (con `ejemplos/atajo-tablas.json`, datos mínimos de ejemplo) sobre `flujos/finanzas/finanzas-bot-v13.json`.
+- Ejemplos funcionando: `ejemplos/normalizar.casos.json`, `ejemplos/preparar-candado.casos.json` y `ejemplos/atajo-v10.casos.json` (con `ejemplos/atajo-tablas.json`, datos mínimos de ejemplo) sobre `flujos/finanzas/finanzas-bot-v14.json`.
 - Para nodos que leen la hoja, `"nodos": {"Tablas": "@tablas.json"}` carga datos de un archivo; arme `tablas.json` con filas `{..., "row_number": N}` y `_h` con los encabezados reales (ver `docs/finanzas-arquitectura.md`).
 - Para medir el tamaño real de un prompt que arma un Code (p. ej. `Contexto.instrucciones`), simúlelo con `--ver` y cuente caracteres (≈ caracteres/4 tokens; Gemma tiene 16K tokens por minuto).
 

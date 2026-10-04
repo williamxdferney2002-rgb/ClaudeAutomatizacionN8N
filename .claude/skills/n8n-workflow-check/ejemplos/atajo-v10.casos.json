@@ -2,57 +2,299 @@
   {
     "nombre": "\"¿Cuánto me debe Andrea?\" por texto → consultar_deudas sin IA",
     "tipo": "valido",
-    "entrada": [{ "texto": "¿Cuánto me debe Andrea?", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": true }], "contiene": ["consultar_deudas", "Andrea"] }
+    "entrada": [
+      {
+        "texto": "¿Cuánto me debe Andrea?",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": true
+        }
+      ],
+      "contiene": [
+        "consultar_deudas",
+        "Andrea"
+      ]
+    }
   },
   {
     "nombre": "nota de voz ya transcrita \"Mi mamá también me pagó todo… a Nequi.\" → cobrar_cuota con todo y cuenta",
     "tipo": "valido",
-    "entrada": [{ "texto": "Mi mamá también me pagó todo lo que me debía y me lo pagó a Nequi.", "origen": "Voz" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": true }], "contiene": ["cobrar_cuota", "\\\"persona\\\":\\\"Mamá\\\"", "\\\"todo\\\":true", "\\\"cuenta\\\":\\\"nequi\\\""] }
+    "entrada": [
+      {
+        "texto": "Mi mamá también me pagó todo lo que me debía y me lo pagó a Nequi.",
+        "origen": "Voz"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": true
+        }
+      ],
+      "contiene": [
+        "cobrar_cuota",
+        "\\\"persona\\\":\\\"Mamá\\\"",
+        "\\\"todo\\\":true",
+        "\\\"cuenta\\\":\\\"nequi\\\""
+      ]
+    }
   },
   {
     "nombre": "alias \"doña Leo\" → Mamá",
     "tipo": "valido",
-    "entrada": [{ "texto": "cuanto me debe doña Leo", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": true }], "contiene": ["Mamá"] }
+    "entrada": [
+      {
+        "texto": "cuanto me debe doña Leo",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": true
+        }
+      ],
+      "contiene": [
+        "Mamá"
+      ]
+    }
   },
   {
     "nombre": "persona que no existe → no inventa, va a la IA",
     "tipo": "invalido",
-    "entrada": [{ "texto": "cuánto me debe el vecino", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": false }] }
+    "entrada": [
+      {
+        "texto": "cuánto me debe el vecino",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": false
+        }
+      ]
+    }
   },
   {
     "nombre": "\"le pagué todo a mi mamá\" (él paga) → no es un cobro",
     "tipo": "invalido",
-    "entrada": [{ "texto": "le pagué todo a mi mamá", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": false }] }
+    "entrada": [
+      {
+        "texto": "le pagué todo a mi mamá",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": false
+        }
+      ]
+    }
   },
   {
     "nombre": "con monto (\"me pagó 135 mil\") → lo resuelve la IA",
     "tipo": "invalido",
-    "entrada": [{ "texto": "mi mamá me pagó todo, 135 mil a Nequi", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": false }] }
+    "entrada": [
+      {
+        "texto": "mi mamá me pagó todo, 135 mil a Nequi",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": false
+        }
+      ]
+    }
   },
   {
     "nombre": "respuesta a un mensaje del bot → nunca atajo",
     "tipo": "invalido",
-    "entrada": [{ "texto": "¿Cuánto me debe Andrea?", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": 55 }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": false }] }
+    "entrada": [
+      {
+        "texto": "¿Cuánto me debe Andrea?",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": 55
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": false
+        }
+      ]
+    }
   },
   {
     "nombre": "mismo mensaje repetido → misma respuesta (el anti-duplicado real es Buscar en log)",
     "tipo": "duplicado",
-    "entrada": [{ "texto": "¿Cuánto me debe Andrea?", "origen": "Texto" }],
-    "nodos": { "Normalizar": [{ "reply_to_id": null }], "Tablas": "@atajo-tablas.json" },
-    "espera": { "salida": [{ "atajo": true }], "contiene": ["consultar_deudas", "Andrea"] }
+    "entrada": [
+      {
+        "texto": "¿Cuánto me debe Andrea?",
+        "origen": "Texto"
+      }
+    ],
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    },
+    "espera": {
+      "salida": [
+        {
+          "atajo": true
+        }
+      ],
+      "contiene": [
+        "consultar_deudas",
+        "Andrea"
+      ]
+    }
+  },
+  {
+    "nombre": "\"link del tablero\" → acción tablero sin IA (v14)",
+    "tipo": "valido",
+    "entrada": [
+      {
+        "texto": "Link del tablero",
+        "origen": "Texto"
+      }
+    ],
+    "espera": {
+      "salida": [
+        {
+          "atajo": true
+        }
+      ],
+      "contiene": [
+        "tablero"
+      ]
+    },
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    }
+  },
+  {
+    "nombre": "pegar el link /exec solo → lo guarda (v14)",
+    "tipo": "valido",
+    "entrada": [
+      {
+        "texto": "https://script.google.com/macros/s/AKfyc_prueba/exec",
+        "origen": "Texto"
+      }
+    ],
+    "espera": {
+      "salida": [
+        {
+          "atajo": true
+        }
+      ],
+      "contiene": [
+        "script.google.com"
+      ]
+    },
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    }
+  },
+  {
+    "nombre": "\"compré un tablero de ajedrez\" no es el link (v14)",
+    "tipo": "invalido",
+    "entrada": [
+      {
+        "texto": "compré un tablero de ajedrez por 50 mil",
+        "origen": "Texto"
+      }
+    ],
+    "espera": {
+      "salida": [
+        {
+          "atajo": false
+        }
+      ]
+    },
+    "nodos": {
+      "Normalizar": [
+        {
+          "reply_to_id": null
+        }
+      ],
+      "Tablas": "@atajo-tablas.json"
+    }
   }
 ]
