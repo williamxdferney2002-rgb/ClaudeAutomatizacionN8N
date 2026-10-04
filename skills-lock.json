@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "google-apps-script": {
+      "source": "jezweb/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/integrations/skills/google-apps-script/SKILL.md",
+      "computedHash": "2508867d1fc783e2ed52569a42564acb7664385fb43ae6b33e268229117e3c1d"
+    },
     "n8n-agents": {
       "source": "czlonkowski/n8n-skills",
       "sourceType": "github",

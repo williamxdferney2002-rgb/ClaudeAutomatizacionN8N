@@ -27,6 +27,8 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 - `flujos/<agente>/` → exports JSON de n8n, nombrados `<agente>-<flujo>-v<N>.json` (minúsculas, sin espacios). Solo la **versión vigente**; las anteriores quedan en el historial de git.
 - `docs/` → documentación de referencia (infraestructura, IDs, arquitectura, pendientes, lecciones).
 - `.claude/rules/` → convenciones que se cargan al editar `flujos/**/*.json`.
+- `apps-script/tablero/` → app web en vivo (Apps Script, solo lectura) sobre la hoja de Finanzas: resumen, gastos, movimientos, deudas, cuentas e inversiones. Repite el cálculo de saldos y deudas de *Contexto/Reporte*: si cambia esa lógica en el bot, actualízala también en `Codigo.gs`. Instalación: [apps-script/tablero/README.md](apps-script/tablero/README.md).
+- `.agents/skills/` → skills instaladas con `npx skills add` (enlazadas en `.claude/skills/`), p. ej. `google-apps-script`.
 - Inventario de flujos y cómo exportar/importar: [flujos/README.md](flujos/README.md).
 
 ## Flujos y versiones actuales
@@ -34,9 +36,10 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 |---|---|---|---|
 | Finanzas - Bot | **v13** | 88 | Telegram; webhook conservado desde v7. `flujos/finanzas/finanzas-bot-v13.json` (v10–v12 + procesa los botones de cuota del Programado) |
 | Finanzas - Programado | **v6** | 34 | `flujos/finanzas/finanzas-programado-v6.json`. Diario 7:00 (cuotas con botones de cuenta, recurrentes incompletas los domingos); resumen domingo 19:00 con saldos, inversiones, deudas; día 1 a las 8:00 |
-| Finanzas - Errores | v1 | 5 | Pendiente manual: Parse Mode HTML en "Avisar error" |
+| Finanzas - Errores | v1 | 5 | `flujos/finanzas/finanzas-errores-v1.json`. Pendiente v2: Parse Mode HTML y escape en "Avisar error", anti-spam |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
 | Agente de Pagos (WhatsApp) | estable | — | Hoja "Registro Pagos"; error workflow `CiiO6RLWImqCMVJS` |
+| Tablero (Apps Script) | v1 | — | `apps-script/tablero/` (4-oct). App web "Solo yo" sobre la hoja de Finanzas |
 
 Arquitectura del bot de finanzas, acciones, pestañas de la hoja y modelo de datos: [docs/finanzas-arquitectura.md](docs/finanzas-arquitectura.md).
 Asistente personal y bot de pagos: [docs/asistente-y-pagos.md](docs/asistente-y-pagos.md).

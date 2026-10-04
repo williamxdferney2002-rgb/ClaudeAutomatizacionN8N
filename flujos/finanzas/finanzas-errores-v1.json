@@ -1,0 +1,338 @@
+{
+  "name": "Finanzas - Errores",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ad8e406d-76af-4607-8bb4-17576b56d103",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "7739445962",
+        "text": "=⚠️ Falló \"{{ $json.execution.lastNodeExecuted || 'un nodo' }}\" en {{ $json.workflow.name }} (ejecución {{ $json.execution.id }}).\n{{ String(($json.execution.error && $json.execution.error.message) || '').slice(0, 300) }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "091c181a-85d5-4cf6-95b4-50c8c90a6446",
+      "name": "Avisar error",
+      "webhookId": "3de479f8-d134-4638-8bb5-58c13b6be043",
+      "credentials": {
+        "telegramApi": {
+          "id": "p2lXYE6uXM1K7clR",
+          "name": "Telegram Finanzas"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Log Bot",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Run ID",
+              "lookupValue": "={{ $('Error Trigger').first().json.execution.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        0
+      ],
+      "id": "745d7b6d-cd14-4e93-abf0-a20fff7221d8",
+      "name": "Buscar en log",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ed98d87b-a90f-4fe4-8484-b4dff56f7a1c",
+              "leftValue": "={{ !!$json['Run ID'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        0
+      ],
+      "id": "1f9c2244-4b37-4289-911b-c120fa8b8a39",
+      "name": "¿Hay registro?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1n97Po-FMwXt0XHwrSp4LLjCsyUMpKBdcUksFxkxJ8GM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Log Bot",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Run ID": "={{ $json['Run ID'] }}",
+            "Resultado": "Error",
+            "Error": "={{ String(($('Error Trigger').first().json.execution.error || {}).message || '').slice(0, 300) }}"
+          },
+          "matchingColumns": [
+            "Run ID"
+          ],
+          "schema": [
+            {
+              "id": "FechaHora",
+              "displayName": "FechaHora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Origen",
+              "displayName": "Origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID mensaje",
+              "displayName": "ID mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Acción",
+              "displayName": "Acción",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Tabla",
+              "displayName": "Tabla",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID registro",
+              "displayName": "ID registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Resultado",
+              "displayName": "Resultado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Datos recibidos",
+              "displayName": "Datos recibidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Valor anterior",
+              "displayName": "Valor anterior",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Valor nuevo",
+              "displayName": "Valor nuevo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        0
+      ],
+      "id": "fdf9b85e-b5da-41bc-921a-3b0c4ef5f77e",
+      "name": "Marcar error",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EPYsNteTb1B5wNyP",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Avisar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar error": {
+      "main": [
+        [
+          {
+            "node": "Buscar en log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar en log": {
+      "main": [
+        [
+          {
+            "node": "¿Hay registro?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay registro?": {
+      "main": [
+        [
+          {
+            "node": "Marcar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "76408f2e-d159-4764-99ea-bba5bd1baa7d",
+  "meta": {
+    "instanceId": "636f9abe3732d321f23bb156c56fcf6965c5c062c60274f1585a78c832783a36"
+  },
+  "nodeGroups": [],
+  "id": "qMWZ59kHUj386TnZ",
+  "tags": []
+}

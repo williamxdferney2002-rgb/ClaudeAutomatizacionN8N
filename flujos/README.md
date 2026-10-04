@@ -5,7 +5,7 @@
 |---|---|---|---|---|
 | Finanzas | Bot | v13 | [finanzas/finanzas-bot-v13.json](finanzas/finanzas-bot-v13.json) | ✅ (v9 a v12 en el historial de git) |
 | Finanzas | Programado | v6 | [finanzas/finanzas-programado-v6.json](finanzas/finanzas-programado-v6.json) | ✅ (v5 en el historial de git) |
-| Finanzas | Errores | v1 | `finanzas/finanzas-errores-v1.json` | — no se versiona por ahora |
+| Finanzas | Errores | v1 | [finanzas/finanzas-errores-v1.json](finanzas/finanzas-errores-v1.json) | ✅ (export de producción, 5 nodos) |
 | Asistente | Entrada | v3 | `asistente/asistente-entrada-v3.json` | — no se versiona por ahora |
 | Asistente | Reloj | v3 | `asistente/asistente-reloj-v3.json` | — no se versiona por ahora |
 | Asistente | Errores | v3 | [asistente/asistente-errores-v3.json](asistente/asistente-errores-v3.json) | ✅ |
