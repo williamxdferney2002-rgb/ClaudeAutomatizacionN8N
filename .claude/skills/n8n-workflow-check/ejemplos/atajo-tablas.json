@@ -1,0 +1,9 @@
+[{ "Personas": [
+    { "Nombre": "Mamá", "Alias": "mi mamá, mamá, mama, mi mama, doña Leo", "Relación": "Familia", "row_number": 2 },
+    { "Nombre": "Doña Sandra", "Alias": "sandra, doña sandra", "row_number": 3 },
+    { "Nombre": "Andrea", "Alias": "", "row_number": 4 },
+    { "Nombre": "Por definir", "Alias": "", "row_number": 5 } ],
+  "Cuentas": [
+    { "ID": "CTA-07", "Nombre": "Nequi", "Alias": "nequi", "Activa": "Sí", "row_number": 2 },
+    { "ID": "CTA-04", "Nombre": "Rappi Ahorros", "Alias": "rappi", "Activa": "Sí", "row_number": 3 } ],
+  "_h": {} }]

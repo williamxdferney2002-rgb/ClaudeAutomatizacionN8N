@@ -25,7 +25,8 @@ El encargo, las 23 secciones y el formato de salida son los del prompt de Willia
 | Plan, reglas de negocio, versiones | `CLAUDE.md`, `docs/finanzas-arquitectura.md`, `docs/asistente-y-pagos.md` |
 | Errores abiertos y pendientes ya conocidos | `docs/pendientes.md`, `docs/lecciones-aprendidas.md` |
 | Infraestructura, IDs | `docs/infraestructura.md`, `docs/ids-y-credenciales.md` |
-| Flujos (implementación) | `*.json` en la raíz (hoy: `Finanzas - Bot v9`, `Finanzas - Programado v5`, `Asistente - Errores`) |
+| Flujos (implementación) | `flujos/<agente>/*.json` (hoy: `finanzas-bot-v15`, `finanzas-programado-v6`, `finanzas-errores-v1`, `asistente-errores-v3`) |
+| Tablero (app web sobre la hoja de Finanzas) | `apps-script/tablero/` (`Codigo.gs`: `calcular` y las escrituras; `Index.html`; `README.md`) |
 
 Antes de auditar, liste qué flujos del CLAUDE.md **no** están en el repo (p. ej. Asistente Entrada/Reloj v3, Agente de Pagos, Finanzas - Errores) y pídale a William los exports. Si sigue sin ellos, audite lo disponible y marque esos módulos como ❓ con esa razón; **no** estime su avance como si existieran.
 
@@ -41,7 +42,8 @@ Antes de auditar, liste qué flujos del CLAUDE.md **no** están en el repo (p. e
 4. **Recurrentes (sección 6)**: responda los 14 puntos uno por uno con evidencia, cruzando la pestaña `Recurrentes`, el flujo Programado (`Agenda`, `Mensajes`) y las acciones del bot (`/suscripciones`, `/cobrar`). Un punto sin ruta conectada de principio a fin es 🔴.
 5. **Duplicados y confirmaciones (13–14)**: verifique `Buscar en log` (clave `tg_<update_id>`), el candado de *Por confirmar* (Reservar → Esperar 3 s → Verificar) y que “Sí, correcto” como texto libre no vuelva a registrar.
 6. **Avance (sección 4)**: haga explícita la tabla de requisitos con su peso (3/2/1) y su % para que la cuenta se pueda revisar; muestre la fórmula `Σ(peso×%)/Σ(peso)`.
-7. **Cruce con lo conocido**: cada hallazgo que ya esté en `docs/pendientes.md` se marca “(ya conocido)”; los nuevos, “(nuevo)”. Las causas ya diagnosticadas en `docs/lecciones-aprendidas.md` no se vuelven a proponer como hallazgo.
+7. **Tablero**: verifique que `calcular()` dé las mismas cifras que *Contexto*/*Reporte*. Verifique también que `registrarPago`/`deshacerCambio` escriban con el formato de `cobrar_cuota` y `/deshacer` (IDs `MOV-`/`OP-`, `Cuotas préstamo: ID=valor` en *Comentarios*), y que cada escritura tenga candado, validación en el servidor y clave anti doble toque. Una diferencia de lógica entre el bot y el tablero es 🔴: las cifras que William ve no cuadrarían.
+8. **Cruce con lo conocido**: cada hallazgo que ya esté en `docs/pendientes.md` se marca “(ya conocido)”; los nuevos, “(nuevo)”. Las causas ya diagnosticadas en `docs/lecciones-aprendidas.md` no se vuelven a proponer como hallazgo.
 
 ## Entrega
 - Guarde el informe completo en `auditorias/AAAA-MM-DD-auditoria-<alcance>.md` y haga commit.

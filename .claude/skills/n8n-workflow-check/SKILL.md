@@ -47,7 +47,7 @@ node $S/simular_code.js "Flujo.json" "Nombre del nodo" casos.json [--ver]
 - Los casos corren en orden y comparten `$getWorkflowStaticData`, así se prueba un duplicado: repita la misma entrada en un caso posterior.
 - `ahora` fija la hora de Bogotá (Luxon, `$now` y `new Date()`); úselo para cambios de mes, domingo 19:00, día 1, años bisiestos.
 - `espera`: `error`, `cantidad`, `salida` (coincidencia parcial), `contiene`, `no_contiene` (p. ej. `"undefined"`, `"NaN"`).
-- Ejemplos funcionando: `ejemplos/normalizar.casos.json` y `ejemplos/preparar-candado.casos.json` (Bot v9).
+- Ejemplos funcionando: `ejemplos/normalizar.casos.json`, `ejemplos/preparar-candado.casos.json` y `ejemplos/atajo-v10.casos.json` (con `ejemplos/atajo-tablas.json`, datos mínimos de ejemplo) sobre `flujos/finanzas/finanzas-bot-v15.json`.
 - Para nodos que leen la hoja, `"nodos": {"Tablas": "@tablas.json"}` carga datos de un archivo; arme `tablas.json` con filas `{..., "row_number": N}` y `_h` con los encabezados reales (ver `docs/finanzas-arquitectura.md`).
 - Para medir el tamaño real de un prompt que arma un Code (p. ej. `Contexto.instrucciones`), simúlelo con `--ver` y cuente caracteres (≈ caracteres/4 tokens; Gemma tiene 16K tokens por minuto).
 
@@ -59,6 +59,12 @@ Limitaciones: `$('Nodo').item` usa el mismo índice (no pairedItem); `this.helpe
 python3 $S/mapa_flujo.py "Flujo.json" [--rutas] [--code]
 ```
 Muestra disparadores, cada Switch/IF con sus destinos (y salidas sin conectar), modelos de IA, lecturas/escrituras, nodos externos sin reintento ni `onError`, ramas de error sin conectar y nodos sueltos.
+
+## Si el cambio toca lógica que el tablero repite
+El tablero (`apps-script/tablero/Codigo.gs`) copia partes del bot. Si cambió alguna de estas, avise en la entrega que el tablero también debe cambiar (o cámbielo y pruébelo, ver skill `auditar-entrega` §2b):
+- saldos y deudas de *Contexto*/*Reporte* ↔ `calcular()`;
+- `cobrar_cuota` y `/deshacer` de *Ejecutar* ↔ `registrarPago` y `deshacerCambio`;
+- `limpio()` de *Solicitudes* ↔ `limpio_()`.
 
 ## Cómo reportarlo en la entrega
 

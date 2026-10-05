@@ -1,6 +1,6 @@
 ---
 paths:
-  - "**/*.json"
+  - "flujos/**/*.json"
 ---
 # Convenciones al editar JSON de flujos n8n de William
 

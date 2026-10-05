@@ -1,7 +1,7 @@
 # Asistente personal y bot de pagos
 
 ## Asistente (Telegram, v3)
-- Flujos: *Asistente - Entrada v3* (119 nodos), *Asistente - Reloj v3* (29, cada 10 min) y *Asistente - Errores* (5).
+- Flujos: *Asistente - Entrada v3* (119 nodos), *Asistente - Reloj v3* (29, cada 10 min) y *Asistente - Errores* (6).
 - Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA` con pestañas Notas, Pendientes, Recordatorios, Claves, Operaciones y Por confirmar. **Todas las columnas de fecha en "Texto sin formato".**
 - Acciones: guardar y buscar notas, crear, listar y completar pendientes (códigos P1…), fecha de pendiente, crear, listar y cancelar recordatorios (R1…; acepta varios), cancelar todos, guardar y consultar claves, ver agenda, posponer y aclarar (botones pendiente/recordatorio).
 - Sincroniza con Google Calendar (calendario "Asistente") y Tasks, **solo lo que creó el bot**.

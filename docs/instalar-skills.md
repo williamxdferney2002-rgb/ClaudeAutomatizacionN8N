@@ -60,10 +60,12 @@ El repositorio de las skills propias es privado:
 | [czlonkowski/n8n-skills](https://github.com/czlonkowski/n8n-skills) | n8n-workflow-patterns, n8n-code-javascript, n8n-expression-syntax, n8n-error-handling, n8n-subworkflows, n8n-binary-and-data, n8n-agents, n8n-self-hosting |
 | [n8n-io/skills](https://github.com/n8n-io/skills) | n8n-workflow-lifecycle-official, n8n-debugging-official, n8n-loops-official, n8n-credentials-and-security-official |
 | [Propias](https://github.com/williamxdferney2002-rgb/ClaudeAutomatizacionN8N/tree/main/.claude/skills) | n8n-workflow-check, auditar-entrega, auditoria-proyecto |
+| [jezweb/claude-skills](https://github.com/jezweb/claude-skills) y [anthropics/skills](https://github.com/anthropics/skills) (para el tablero) | google-apps-script; frontend-design, webapp-testing, theme-factory. Están en `.agents/skills/` y enlazadas en `.claude/skills/`; se instalan con `npx skills add <repo> --skill <nombre>` |
 
 ## Cómo se usan
 - Solas, según el tema (Claude las elige por su descripción).
 - A mano: `/n8n-workflow-check`, `/auditar-entrega`, `/auditoria-proyecto finanzas|asistente|pagos|todo` (esta última solo se ejecuta a mano).
 
 ## Actualizar
-`npx skills update -p -y` actualiza las skills de terceros según `skills-lock.json`. Las propias se actualizan editándolas en este repositorio y volviendo a correr el paso 3.
+`npx skills update -p -y` actualiza las skills de terceros según `skills-lock.json`. Ojo: también **mueve** a `.agents/skills/` con enlaces las que estaban copiadas en `.claude/skills/`. Si el contenido no cambió (`diff -rq` contra la versión anterior), se deja todo como estaba (`git checkout -- .claude/skills` y se borran las carpetas nuevas de `.agents/skills/`), para no mover cientos de archivos sin un cambio real. La última revisión fue el 4-oct-2026: las 16 skills de terceros ya estaban en su versión más reciente.
+Las propias se actualizan editándolas en este repositorio y volviendo a correr el paso 3.
