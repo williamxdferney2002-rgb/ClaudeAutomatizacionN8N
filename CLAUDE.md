@@ -90,7 +90,18 @@ Gemini (nivel gratuito) es la base: **3.1 Flash Lite** principal, **3.5 Flash Li
 **No usar Gemini 3.8 Flash** (20 peticiones al día). Las cuotas diarias se reinician a medianoche del Pacífico (2:00 a. m. en Colombia; 3:00 a. m. desde noviembre). **No activar facturación.**
 
 ## Estado y próximos pasos
-Errores abiertos: `/suscripciones` incompleto (del 2 de octubre). En la v11 quedan resueltos el audio, el préstamo registrado como gasto (guardia de "presté") y `/cobrar` sin opciones o con símbolos pegados al nombre.
-Los errores del 3 de octubre (pago de la mamá, cobro a Doña Sandra, `/deshacer` de cobros, encabezado de `/cobrar`) y los del audio quedan resueltos desde la **v10** ([docs/plan-v10.md](docs/plan-v10.md)). Falta en la hoja: cuotas PR-02-4/5 y el gasto de Spotify que era un préstamo a Nicolás ([docs/pendientes.md](docs/pendientes.md)).
-Pendientes grandes: Bloque 2 de la auditoría (anular en vez de borrar y `/deshacer` completo), Asistente v4 (hábitos y memoria) y dashboard en Looker Studio, que William quiere aprender.
-Lista priorizada con causas y soluciones: [docs/pendientes.md](docs/pendientes.md). Lecciones aprendidas y diagnósticos: [docs/lecciones-aprendidas.md](docs/lecciones-aprendidas.md).
+Estado completo, lo que falta en orden y lo hecho por versión: [docs/pendientes.md](docs/pendientes.md) (5-oct-2026). Resumen:
+1. **William instala y prueba** el Bot v15, el Programado v6 y el Tablero v6 (este último pide autorizar el permiso de edición). Los errores del 3-oct, resueltos en la v10, nunca se probaron en Telegram.
+2. **Datos a corregir en la hoja:** cuotas PR-02-4/5 y el gasto de Spotify que era un préstamo a Nicolás.
+3. **Errores abiertos:**
+   - `/suscripciones` incompleto;
+   - Finanzas - Errores v2 y Asistente - Errores sin `parse_mode: HTML`;
+   - IF *¿Es corrección?* sin sentido;
+   - borrados sin reintento.
+4. **Mejoras grandes:** Bloque 2 (anular en vez de borrar, `/deshacer` completo), Asistente v4, Looker Studio y el bot de pagos.
+5. **Orden del repo:**
+   - faltan los exports de Asistente Entrada/Reloj y de Pagos;
+   - las pruebas del tablero deben pasar al repo con datos inventados;
+   - la rama `claude/peaceful-wozniak-fusa0r` aún no está en `main`.
+
+Trabajar en local (archivos, requisitos y prompt de arranque): [docs/sesion-local.md](docs/sesion-local.md). Diagnósticos ya resueltos: [docs/lecciones-aprendidas.md](docs/lecciones-aprendidas.md).

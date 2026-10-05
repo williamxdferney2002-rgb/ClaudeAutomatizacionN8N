@@ -1,41 +1,99 @@
-# Pendientes priorizados
+# Estado del proyecto y pendientes
 
-## Errores detectados el 3-oct-2026 (capturas) — resueltos en la v10 (falta probar en Telegram)
-5. **CRÍTICO · Pago de la mamá registrado a Doña Sandra.** Por voz: *"mi mamá también me pagó todo lo que me debía y me lo pagó a Nequi"* → *"registré el pago de Doña Sandra: cuota 4, 5 (parcial) ($240.000) en Nequi"*, **sin confirmar**. Son personas distintas.
-   - Causa probable: la IA de audio eligió `cobrar_cuota` y devolvió el préstamo de Doña Sandra o `persona: null`. En *Plan*, `buscarPrestamo` toma el **único préstamo** si no hay ID ni persona, y `cobrar_cuota` no confirma ni compara la persona dicha con la del préstamo.
-   - Solución: ver [plan-v10.md](plan-v10.md), puntos A y C.
-6. **CRÍTICO · "Ya me pagó todo mi mamá a nequi" no encuentra la deuda.** Responde *"No encontré un préstamo con cuotas para esa persona"*. La deuda de la mamá viene de compras hechas por ella con la tarjeta.
-   - Causa probable: (a) la IA eligió `cobrar_cuota`, que solo busca préstamos formales (*Préstamos*), no las deudas sueltas (*Préstamo dado* − *Abono recibido*); (b) "mamá" no coincide con el nombre guardado (`buscarPrestamo` compara `persona` por igualdad o `includes`, sin alias de *Personas*); (c) las compras con tarjeta quizá no quedaron como deuda de ella.
-   - Confirmado con el Excel: la deuda era suelta (*Préstamo dado* − *Abono*), sin préstamo formal. Solución: ver [plan-v10.md](plan-v10.md), punto B.
-7. **CRÍTICO · `/deshacer` de un cobro de préstamo deja las cuotas pagadas.** Al deshacer el cobro equivocado a Doña Sandra se borró el movimiento, pero PR-02-4 quedó *Pagada* y PR-02-5 con $68.600. Corrección manual de datos en la hoja y arreglo en la v10 (punto G).
-8. **`/cobrar`: el encabezado "📋 Mensaje para X (cópialo y reenvíalo)" estorba al copiar.** Arreglo en *Consultar* (punto H).
-- **Datos a corregir a mano** (lo dejó el error 7): en *Cuotas préstamo*, PR-02-4 → Estado *Pendiente* y vaciar Fecha pago, Valor recibido, Cuenta donde llegó e ID movimiento; PR-02-5 → vaciar Valor recibido, Cuenta donde llegó e ID movimiento. Doña Sandra debe $514.200 de PR-02.
+Actualizado: **5-oct-2026**. Diagnósticos ya resueltos: [lecciones-aprendidas.md](lecciones-aprendidas.md).
 
-## Errores detectados el 2-oct-2026 (capturas)
-1. **(v11: resuelto — voz por Whisper, regla de conversación reciente y guardia: si dice "presté" y la IA deja un Gasto, pregunta "¿Préstamo a X o Gasto mío?")** **CRÍTICO · Préstamo registrado como gasto y con otro nombre.**
-   - **Dato a corregir:** `MOV-261002145118-2818-1` (2-oct, Gasto $7.000 "Pago a Spotify", Rappi Ahorros). Con la **v12** importada, responder a ese mensaje del bot: *"No era un gasto de Spotify: le presté 7000 a Nicolás para YouTube"* (con v9–v11 el aviso de saldo negativo hace que la corrección se pierda al tocar "Sí") (o editar la fila: Tipo *Préstamo dado*, Persona *Nicolás*, sin Categoría ni Comercio). Por voz dijo *"le presté 7000 pesos a Nicolás para pagar YouTube, la plata salió de Rappi Ahorros"* y quedó como *"gasto de $7.000 en Suscripciones (Pago a Spotify)"*, sin confirmar.
-   - Causa: la IA de audio mezcló la conversación reciente (se venía hablando de Spotify) y no detectó la palabra "presté".
-   - Solución: (a) transcribir primero con Groq Whisper y usar el mismo camino que el texto (con atajos y el modelo de texto); (b) en el prompt, la conversación reciente solo resuelve "este/ese" y **nunca reemplaza nombres ni marcas** del mensaje; (c) guardia en Plan: si el mensaje dice "presté/prestar" y no hay Préstamo dado, o si el detalle menciona una marca o persona que no está en el mensaje, **pedir confirmación**.
-2. **CRÍTICO · `/suscripciones` no muestra todas.** La consulta filtra las filas sin *Monto total* numérico, mientras que la búsqueda de duplicados no filtra. Si una fila pegada a mano quedó corrida (por ejemplo Spotify), queda **oculta** pero **bloquea** crearla de nuevo (*"Ya tienes Spotify"*).
-   - Solución: listar todas las filas y marcar las incompletas (*"⚠️ falta el valor"*); validar las columnas al crear o editar; la detección de duplicados solo con coincidencia exacta del nombre.
-3. **(v10: resuelto con Whisper primero + atajo)** **Audio "¿cuánto me debe Andrea?"** → una vez respondió con los movimientos de Nu del día; al repetirlo, bien. Causa: la IA de audio eligió `consultar_movimientos` (no determinista). Solución: el mismo camino Whisper + atajos (*"cuánto me debe X"* → `consultar_deudas` sin IA) y una regla explícita en el prompt.
-4. **(v11: resuelto)** **`/cobrar` sin nombre** solo pedía el nombre → ahora botones con quienes deben. También `/cobrar Papá →` (símbolos pegados) decía "Papá → no te debe nada": el argumento se limpia y una persona inexistente se dice como tal.
+## Dónde estamos
 
-## Hallazgos de `n8n-workflow-check` (3-oct-2026, exports en producción)
-- **Asistente - Errores › Avisar error** sin `parse_mode: HTML` ni escape: un `_` o `*` en el mensaje de error rompe el aviso (el mismo pendiente manual que Finanzas - Errores).
-- ~~Bot v9 › Preparar archivo y Res duplicado: `sello` sin `$execution.id`~~ (corregido en v10).
-- **Bot v10 (encontrado al probar v9)**: al confirmar "Sí, de Nequi" cuando una cuenta queda en negativo, v9 volvía a preguntar sin fin porque se perdía `cuenta_ok`; corregido en v10.
-- **Bot v10 › ¿Es corrección?**: las dos ramas van a *Ejecutar*; el IF sobra o falta la ruta distinta.
-- **Bot v10 › Borrar movimientos / Borrar cuotas**: sin reintento ni `onError` (además del borrado físico del Bloque 2).
-- ~~Programado v5 › Enviar gráfica: caption sin `parse_mode` HTML~~ (corregido en v6).
+| Componente | Versión en el repo | Estado |
+|---|---|---|
+| Finanzas - Bot | **v15** (88 nodos) | Entregada el 4-oct. Hay que confirmar que esté importada y publicada en n8n. |
+| Finanzas - Programado | **v6** (34 nodos) | Entregada el 4-oct. Hay que confirmar que esté publicada. |
+| Finanzas - Errores | v1 (5 nodos) | Export de producción. La v2 está pendiente (punto 3). |
+| Asistente - Entrada / Reloj | v3 | En producción. **No está en el repo**: falta el export. |
+| Asistente - Errores | v3 | En el repo. Le falta `parse_mode: HTML`. |
+| Agente de Pagos (WhatsApp) | estable | En producción. **No está en el repo**. |
+| Tablero (Apps Script) | **v6** | `Codigo.gs` v5 (escribe) e `Index.html` v6 (diseño "terminal de mar profundo"). Probado fuera de Google; falta instalarlo y probarlo dentro de Google. |
 
-## Bloque 2 de la auditoría (v11)
-- v10 ya revierte en `/deshacer` las cuotas de préstamo de un cobro (detalle `Cuotas préstamo: ID=valor` en *Comentarios*).
-- Anular en vez de borrar (columna Estado registro), bitácora *Cambios* y `/deshacer` completo (préstamos, cobros, reventas, inversiones, cuentas). Ajustar las fórmulas de *Resumen* y Looker para ignorar los anulados.
-- Escrituras por número de fila (S3) y escritura no atómica (S4).
+**Git:** todo lo del 3 al 5 de octubre está en la rama `claude/peaceful-wozniak-fusa0r`, 23 commits por delante de `main`. Falta pasarlo a `main` con un *pull request* o un *merge*.
 
-## Otros
-- Asistente v4 (ver asistente-y-pagos.md). Bot de pagos: invertir el modelo principal.
-- Bot del gimnasio (idea): ejercicios, pesos, rutinas y *"¿cuándo fue la última vez que hice pierna?"*.
-- Dashboard en Looker Studio (William quiere aprenderlo; guía paso a paso en el historial del chat).
-- Servidor: confirmar la ruta del compose, revisar `sudo -l` y aplicar las actualizaciones con n8n detenido.
+## Por hacer, en orden
+
+### 1. Instalar y probar lo entregado (lo hace William)
+- [ ] **Bot v15:** despublicar la versión vieja **antes** de publicar la nueva (si no, n8n borra el webhook) e importar `flujos/finanzas/finanzas-bot-v15.json`. Probar en Telegram:
+  - "Debo 10k a Daniela de los postres" → elegir la categoría → confirmar. Los saldos no deben cambiar.
+  - "Le pagué a Daniela 10 mil por Nequi".
+  - Los errores del 3-oct, resueltos en la v10 pero **nunca probados en Telegram**: "mi mamá ya me pagó todo a Nequi" (no debe ir a Doña Sandra), "Doña Sandra me pagó la cuota", `/deshacer` de un cobro (las cuotas deben volver a pendientes) y `/cobrar Papá`.
+  - Corregir respondiendo a un mensaje del bot (v12) y `/tablero`.
+- [ ] **Programado v6:** revisar el aviso diario de las 7:00 con los botones de cuenta y el resumen del domingo a las 19:00.
+- [ ] **Tablero v6:**
+  - Pegar `Codigo.gs` e `Index.html`.
+  - Ejecutar `getDatos` una vez en el editor y **autorizar el permiso de edición** (lo pide desde la v5).
+  - Crear una nueva versión de la implementación.
+  - Probar con un pago pequeño y deshacerlo, y comprobar que `/deshacer` en Telegram también deshace un pago hecho desde el tablero.
+- [ ] Enviar el link del tablero al bot una vez: `/tablero https://script.google.com/…/exec`.
+- [ ] Pasar la rama a `main`.
+
+### 2. Datos a corregir en la hoja
+- [ ] **PR-02-4 y PR-02-5** (*Cuotas préstamo*), daño que dejó el error del 3-oct:
+  - PR-02-4: Estado *Pendiente*; vaciar Fecha pago, Valor recibido, Cuenta donde llegó e ID movimiento.
+  - PR-02-5: vaciar Valor recibido, Cuenta donde llegó e ID movimiento.
+  - Hasta corregirlo, el bot y el tablero muestran $274.200 de Doña Sandra en cuotas, en vez de $514.200.
+- [ ] **`MOV-261002145118-2818-1`**: era un préstamo a Nicolás, no un gasto de Spotify. Con la v12 o superior, responda a ese mensaje del bot: *"No era un gasto de Spotify: le presté 7000 a Nicolás para YouTube"*. También puede editar la fila: Tipo *Préstamo dado*, Persona *Nicolás*, sin Categoría ni Comercio.
+
+### 3. Errores abiertos
+- [ ] **`/suscripciones` no muestra todas** (2-oct). La consulta descarta las filas sin *Monto total* numérico, pero la búsqueda de duplicados sí las cuenta. Una fila pegada a mano y corrida (Spotify) queda oculta y además bloquea crearla de nuevo ("Ya tienes Spotify").
+  - Solución: listar todas y marcar las incompletas ("⚠️ falta el valor"); validar columnas al crear o editar; detectar duplicados solo por nombre exacto.
+- [ ] **Finanzas - Errores v2:**
+  - *Avisar error* con `parse_mode: HTML` y texto escapado;
+  - anti-spam (un aviso por error repetido);
+  - mensaje claro cuando es cuota de Gemini;
+  - marcar la fila en *Log Bot*.
+- [ ] **Asistente - Errores › Avisar error:** el mismo arreglo de `parse_mode: HTML` y escape.
+- [ ] **Bot › ¿Es corrección?:** las dos ramas van a *Ejecutar*. Sobra el IF o falta la ruta distinta.
+- [ ] **Bot › Borrar movimientos / Borrar cuotas:** no tienen reintento ni `onError`.
+
+### 4. Mejoras grandes (requieren plan y "dale")
+- [ ] **Bloque 2 de la auditoría:**
+  - anular en vez de borrar (columna de estado del registro), con bitácora de *Cambios*;
+  - `/deshacer` completo: préstamos, reventas, inversiones y cuentas;
+  - escrituras por número de fila (S3) y escritura no atómica (S4);
+  - ajustar *Resumen*, Looker y el tablero para ignorar lo anulado.
+- [ ] **Asistente v4:**
+  - borrar recordatorios por fecha;
+  - eliminar un pendiente sin completarlo;
+  - memoria de los últimos intercambios;
+  - hábitos con rachas y un check-in diario.
+
+  Detalle en [asistente-y-pagos.md](asistente-y-pagos.md).
+- [ ] **Bot de pagos:** invertir el modelo principal y versionar su export en el repo.
+- [ ] **Dashboard en Looker Studio:** William quiere aprenderlo. La guía paso a paso está en el historial del chat.
+- [ ] **Bot del gimnasio** (idea): ejercicios, pesos, rutinas y "¿cuándo fue la última vez que hice pierna?".
+- [ ] **Tablero, ideas siguientes:** token por enlace para celulares con varias cuentas de Google (hoy solo abre en incógnito); que el candado coordine con el bot (hoy solo bloquea al propio tablero).
+
+### 5. Orden del repositorio
+- [ ] Subir los exports que faltan: Asistente Entrada y Reloj v3, y Pagos (agente y errores), con los nombres de [../flujos/README.md](../flujos/README.md).
+- [ ] Llevar las pruebas del tablero al repo con **datos inventados**. Hoy viven fuera porque usan el Excel real.
+- [ ] Servidor: confirmar la ruta del `docker compose`, revisar `sudo -l` y aplicar actualizaciones con n8n detenido ([infraestructura.md](infraestructura.md)).
+- [ ] Repo **Oura**: tiene instaladas las skills y un `CLAUDE.md` base. Falta definir de qué trata.
+
+## Hecho (resumen por versión)
+- **Bot:**
+  - **v10:** "X me pagó" unificado (deuda suelta o préstamo, con confirmación), Whisper primero en voz, `/deshacer` que revierte cuotas, `/cobrar` sin encabezado y IDs con `$execution.id`.
+  - **v11:** `/cobrar` con botones y guardia de "presté".
+  - **v12:** corrección por botones sin perderse.
+  - **v13:** botones de cuotas del Programado.
+  - **v14:** `/tablero`.
+  - **v15:** deuda sin plata.
+- **Programado v6:** cuotas con botones de cuenta, recurrentes incompletas y resumen semanal detallado.
+- **Tablero:**
+  - **v1:** lectura en vivo.
+  - **v2:** detalle por deudor, tarjeta y cuenta.
+  - **v3:** pestaña Ingresos.
+  - **v4:** diseño "sala de control" y colores coral y morado.
+  - **v5:** corregir, registrar pagos, deshacer y botón al bot.
+  - **v6:** diseño "terminal de mar profundo".
+- **Herramientas:**
+  - skills propias: `n8n-workflow-check`, `auditar-entrega` (también revisa el tablero) y `auditoria-proyecto`;
+  - 16 skills de terceros al día;
+  - hook de Luxon;
+  - guía para trabajar en local: [sesion-local.md](sesion-local.md).
