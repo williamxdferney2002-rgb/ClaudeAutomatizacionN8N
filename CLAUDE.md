@@ -39,7 +39,7 @@ Para la lista completa (credenciales, carpetas de Drive, Calendar, Tasks y la ho
 | Finanzas - Errores | v1 | 5 | `flujos/finanzas/finanzas-errores-v1.json`. Pendiente v2: Parse Mode HTML y escape en "Avisar error", anti-spam |
 | Asistente - Entrada / Reloj / Errores | **v3** | 119 / 29 / 6 | Hoja `1LItc9pXs9iXbNi77a2TqmOA23XZKPDZ71fvp6J-pLyA`. Errores en `flujos/asistente/asistente-errores-v3.json` |
 | Agente de Pagos (WhatsApp) | estable | — | Hoja "Registro Pagos"; error workflow `CiiO6RLWImqCMVJS` |
-| Tablero (Apps Script) | **v5** | — | `apps-script/tablero/` (4-oct). App web "Solo yo" sobre la hoja de Finanzas; detalle por deudor, tarjeta y cuenta; pestaña Ingresos; diseño "sala de control". v5: corregir categoría y detalle, registrar pagos, deshacer y botón al bot `@AsistenteFinanzasWD_bot` |
+| Tablero (Apps Script) | **v6** | — | `apps-script/tablero/` (5-oct). App web "Solo yo" sobre la hoja de Finanzas; detalle por deudor, tarjeta y cuenta; pestaña Ingresos; corregir categoría y detalle, registrar pagos, deshacer y botón al bot `@AsistenteFinanzasWD_bot` (v5). v6: diseño "terminal de mar profundo" (azul marino plano, acento cian) |
 
 Arquitectura del bot de finanzas, acciones, pestañas de la hoja y modelo de datos: [docs/finanzas-arquitectura.md](docs/finanzas-arquitectura.md).
 Asistente personal y bot de pagos: [docs/asistente-y-pagos.md](docs/asistente-y-pagos.md).

@@ -48,12 +48,14 @@ Al pasar a la **v5**, Google pide autorizar de nuevo: antes el script solo leía
 - Permisos que pide: leer y editar esta hoja (desde la v5) y mostrar el menú. Además de la hoja, solo carga la librería de gráficas (Chart.js desde cdnjs) y la tipografía (Google Fonts).
 - Todo el texto de la hoja se muestra escapado (un `<script>` en un detalle se ve como texto, no se ejecuta).
 
-## Diseño (v4, 4-oct): sala de control
-Solo modo oscuro: fondo carbón `#0e0e0e`, paneles `#191919` con borde fino y un único acento violeta-azul (`#405bff → #7084ff`); el relieve se marca con brillo, no con sombras. Esquinas tipo píldora (30 px en tarjetas, 60 px en el menú).
-- **Portada:** el patrimonio como titular grande con brillo detrás; debajo, en violeta, cuánto cambió desde la última foto.
-- **Menú:** píldora flotante (abajo en el celular, arriba al centro en el PC); la pestaña activa lleva un punto azul.
-- **Letras:** *Inter* para el texto y *JetBrains Mono* para montos, fechas y códigos (Google Fonts; si no cargan, usa las del sistema).
-- **Colores de dinero:** ingresos y entradas en violeta `#7084ff`; gastos en coral `#e66767`, que también marca las alertas (mes en negativo, presupuesto pasado, sin conexión); cuotas de préstamos en morado `#a066bd`. Validados para daltonismo. Las pérdidas se marcan con ▼ en gris.
+## Diseño (v6, 5-oct): terminal de mar profundo
+Solo modo oscuro y plano: fondo azul marino `#17202e`, tarjetas `#202a3e` con borde negro de 1 px, sin sombras ni brillos, y un único acento cian `#6ae4ff` para bordes de acción, íconos y el monto de "te deben".
+- **Portada:** el patrimonio como bloque de cifra (hasta 100 px) sobre el resplandor azul que nace arriba a la izquierda. El cambio desde la última foto va en una insignia con el degradado verde-cian, o con borde coral si bajó.
+- **Menú y meses:** barra de filtros tipo casa de cambio; la opción activa es una píldora blanca con texto negro.
+- **Botones:** la acción principal es una píldora blanca (Registrar pago, Guardar, Bot); la secundaria, un enlace con borde cian (Corregir, Volver, Ver movimientos).
+- **Medidas:** tarjetas con esquinas de 15 px, paneles de 24 px, botones y chips de 80 px, campos de 4 px; 24 px dentro de las tarjetas y 16 px entre elementos.
+- **Letras:** *Open Sans* (700 en títulos y cifras, con espaciado -0,036 em) y *Source Sans 3* para montos y datos de las listas (Google Fonts; si no cargan, usa las del sistema).
+- **Colores de dinero:** ingresos en cian `#6ae4ff`, gastos y alertas en coral `#e66767`, cuotas en morado `#a066bd`. Se distinguen con los tres tipos comunes de daltonismo (diferencia mínima 22, el umbral cómodo es 20).
 
 ## Cómo se probó (fuera de Google)
 - `calcular()` con los datos reales del Excel del 3-oct convertidos al formato de `getValues()` (fechas como `Date`): las cifras coinciden con el bot y el resumen semanal (Nequi $720.000, disponible $3.685.100, inversiones $1.056.660, te deben $1.590.600, patrimonio $2.331.112, CDT $1.144.214, mínimo RappiCard $2.886.835) → 17/17.
